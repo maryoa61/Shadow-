@@ -1,0 +1,6 @@
+{
+  "name": "SHADOW_NET",
+  "description": "Tactical secure routing VPN client with Anti-DPI toolkit, Multi-Hop Matrix, real-time telemetry, and Xray core configuration.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
