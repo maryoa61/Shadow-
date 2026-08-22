@@ -96,6 +96,7 @@ import com.example.ui.theme.TextSecondary
 import com.example.ui.theme.VlessCyan
 import com.example.viewmodel.VpnUiState
 import com.example.viewmodel.VpnViewModel
+import java.util.Locale
 
 @Composable
 fun HomeScreen(
@@ -451,7 +452,7 @@ fun MetricsGridSection(uiState: VpnUiState) {
                         )
                     }
                     Text(
-                        text = "${uiState.totalUsageGb} / ${uiState.usageLimitGb.toInt()} GB",
+                        text = "${String.format(Locale.US, "%.3f", uiState.totalUsageGb)} / ${uiState.usageLimitGb.toInt()} GB",
                         style = MonoMetricsSmall.copy(fontWeight = FontWeight.Bold),
                         color = TextPrimary
                     )

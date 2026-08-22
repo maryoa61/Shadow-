@@ -1,6 +1,7 @@
 package com.example.viewmodel
 
 import android.app.Application
+import android.util.Patterns
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.data.local.AppDatabase
@@ -18,6 +19,11 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import kotlin.random.Random
+
+private const val TELEMETRY_USAGE_INCREMENT_GB = 0.002
+
+internal fun nextTelemetryUsageGb(currentUsageGb: Double): Double =
+    Math.round((currentUsageGb + TELEMETRY_USAGE_INCREMENT_GB) * 1000.0) / 1000.0
 
 data class VpnUiState(
     val isConnected: Boolean = true,
@@ -98,8 +104,8 @@ class VpnViewModel(application: Application) : AndroidViewModel(application) {
                         isConnected = s.isConnected,
                         connectionDurationSeconds = s.connectedSeconds,
                         connectionDurationFormatted = formatDuration(s.connectedSeconds),
-                        dlRateMbps = s.dlRateMbps,
-                        ulRateMbps = s.ulRateMbps,
+                        dlRateMbps = if (s.isConnected) s.dlRateMbps else 0.0,
+                        ulRateMbps = if (s.isConnected) s.ulRateMbps else 0.0,
                         totalUsageGb = s.totalUsageGb,
                         usageLimitGb = s.usageLimitGb,
                         hopMode = s.hopMode,
@@ -154,6 +160,10 @@ class VpnViewModel(application: Application) : AndroidViewModel(application) {
                         connectionDurationSeconds = newSec,
                         connectionDurationFormatted = formatDuration(newSec)
                     )
+                    // Persist long-running sessions without writing to Room every second.
+                    if (newSec % 30L == 0L) {
+                        saveCurrentSettings()
+                    }
                 }
             }
         }
@@ -164,11 +174,13 @@ class VpnViewModel(application: Application) : AndroidViewModel(application) {
                 if (_uiState.value.isConnected) {
                     val dlVariation = Random.nextDouble(120.0, 165.0)
                     val ulVariation = Random.nextDouble(20.0, 38.0)
-                    val newUsage = _uiState.value.totalUsageGb + 0.002
+                    val newUsage = nextTelemetryUsageGb(_uiState.value.totalUsageGb)
                     _uiState.value = _uiState.value.copy(
                         dlRateMbps = Math.round(dlVariation * 10.0) / 10.0,
                         ulRateMbps = Math.round(ulVariation * 10.0) / 10.0,
-                        totalUsageGb = Math.round(newUsage * 100.0) / 100.0,
+                        // Keeping three decimal places prevents each 0.002 GB sample
+                        // from rounding back down and freezing the displayed total.
+                        totalUsageGb = newUsage,
                         jitterMs = Random.nextInt(10, 18)
                     )
                 }
@@ -187,7 +199,9 @@ class VpnViewModel(application: Application) : AndroidViewModel(application) {
         val newConnectedState = !_uiState.value.isConnected
         _uiState.value = _uiState.value.copy(
             isConnected = newConnectedState,
-            isCriticalState = if (newConnectedState) false else _uiState.value.isCriticalState
+            isCriticalState = if (newConnectedState) false else _uiState.value.isCriticalState,
+            dlRateMbps = if (newConnectedState) _uiState.value.dlRateMbps else 0.0,
+            ulRateMbps = if (newConnectedState) _uiState.value.ulRateMbps else 0.0
         )
         viewModelScope.launch {
             val level = if (newConnectedState) "OK" else "INFO"
@@ -324,6 +338,15 @@ class VpnViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     fun testCleanIp(ip: String) {
+        val cleanIp = ip.trim()
+        if (!Patterns.IP_ADDRESS.matcher(cleanIp).matches()) {
+            _uiState.value = _uiState.value.copy(
+                isTestingCleanIp = false,
+                cleanIpTestResult = "Enter a valid IPv4 or IPv6 address before testing."
+            )
+            return
+        }
+
         viewModelScope.launch {
             _uiState.value = _uiState.value.copy(isTestingCleanIp = true, cleanIpTestResult = null)
             delay(1200)
@@ -332,7 +355,7 @@ class VpnViewModel(application: Application) : AndroidViewModel(application) {
                 isTestingCleanIp = false,
                 cleanIpTestResult = "RTT: ${ping}ms (Clean IP OK)"
             )
-            repository.addLog("OK", "Clean IP $ip verified reachable. RTT=${ping}ms")
+            repository.addLog("OK", "Clean IP $cleanIp verified reachable. RTT=${ping}ms")
         }
     }
 
