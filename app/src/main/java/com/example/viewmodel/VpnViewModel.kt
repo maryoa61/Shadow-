@@ -324,6 +324,14 @@ class VpnViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     fun testCleanIp(ip: String) {
+        val cleanIp = ip.trim()
+        if (cleanIp.isEmpty()) {
+            _uiState.value = _uiState.value.copy(
+                isTestingCleanIp = false,
+                cleanIpTestResult = "Enter a Clean IP address before testing."
+            )
+            return
+        }
         viewModelScope.launch {
             _uiState.value = _uiState.value.copy(isTestingCleanIp = true, cleanIpTestResult = null)
             delay(1200)
@@ -332,7 +340,7 @@ class VpnViewModel(application: Application) : AndroidViewModel(application) {
                 isTestingCleanIp = false,
                 cleanIpTestResult = "RTT: ${ping}ms (Clean IP OK)"
             )
-            repository.addLog("OK", "Clean IP $ip verified reachable. RTT=${ping}ms")
+            repository.addLog("OK", "Clean IP $cleanIp verified reachable. RTT=${ping}ms")
         }
     }
 

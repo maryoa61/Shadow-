@@ -97,34 +97,40 @@ fun EditServerScreen(
     val clipboardManager = LocalClipboardManager.current
     val scrollState = rememberScrollState()
 
-    var alias by remember { mutableStateOf(serverToEdit?.alias ?: "US-East-Alpha-01") }
-    var address by remember { mutableStateOf(serverToEdit?.address ?: "192.168.1.100") }
+    // A new form must not silently save sample hostnames or credentials.
+    // Existing servers still populate every field from their persisted configuration.
+    var alias by remember { mutableStateOf(serverToEdit?.alias.orEmpty()) }
+    var address by remember { mutableStateOf(serverToEdit?.address.orEmpty()) }
     var port by remember { mutableStateOf(serverToEdit?.port?.toString() ?: "443") }
-    var uuid by remember { mutableStateOf(serverToEdit?.uuid ?: "a1b2c3d4-e5f6-7890-1234-567890abcdef") }
+    var uuid by remember { mutableStateOf(serverToEdit?.uuid.orEmpty()) }
     var showPassword by remember { mutableStateOf(false) }
 
     var selectedProtocol by remember { mutableStateOf(serverToEdit?.protocol ?: "VLESS") }
     var selectedSecurity by remember { mutableStateOf(serverToEdit?.security ?: "Reality") }
-    var publicKey by remember { mutableStateOf(serverToEdit?.publicKey ?: "abcd1234efgh5678ijkl9012mnop") }
-    var shortId by remember { mutableStateOf(serverToEdit?.shortId ?: "16") }
-    var spiderX by remember { mutableStateOf(serverToEdit?.spiderX ?: "/") }
-    var sni by remember { mutableStateOf(serverToEdit?.sni ?: "microsoft.com") }
+    var publicKey by remember { mutableStateOf(serverToEdit?.publicKey.orEmpty()) }
+    var shortId by remember { mutableStateOf(serverToEdit?.shortId.orEmpty()) }
+    var spiderX by remember { mutableStateOf(serverToEdit?.spiderX.orEmpty()) }
+    var sni by remember { mutableStateOf(serverToEdit?.sni.orEmpty()) }
     var flow by remember { mutableStateOf(serverToEdit?.flow ?: "xtls-rprx-vision") }
     var transport by remember { mutableStateOf(serverToEdit?.transport ?: "TCP") }
-    var cleanIp by remember { mutableStateOf(serverToEdit?.cleanIp ?: "") }
+    var cleanIp by remember { mutableStateOf(serverToEdit?.cleanIp.orEmpty()) }
 
-    val handleSave = {
-        val parsedPort = port.toIntOrNull() ?: 443
+    val handleSave: () -> Unit = save@{
+        val parsedPort = port.toIntOrNull()
+        if (alias.isBlank() || address.isBlank() || uuid.isBlank() || parsedPort == null || parsedPort !in 1..65535) {
+            Toast.makeText(context, "Enter a name, address, valid port, and UUID/password", Toast.LENGTH_SHORT).show()
+            return@save
+        }
         val updated = (serverToEdit ?: ServerEntity(
-            alias = alias,
-            address = address,
+            alias = alias.trim(),
+            address = address.trim(),
             port = parsedPort,
-            uuid = uuid
+            uuid = uuid.trim()
         )).copy(
-            alias = alias.ifEmpty { "Custom-Node" },
-            address = address.ifEmpty { "127.0.0.1" },
+            alias = alias.trim(),
+            address = address.trim(),
             port = parsedPort,
-            uuid = uuid,
+            uuid = uuid.trim(),
             protocol = selectedProtocol,
             security = selectedSecurity,
             publicKey = publicKey,
@@ -239,7 +245,7 @@ fun EditServerScreen(
                         label = "Alias (Name)",
                         value = alias,
                         onValueChange = { alias = it },
-                        placeholder = "US-East-Alpha-01"
+                        placeholder = "My server"
                     )
 
                     // Address and Port in 2 columns
@@ -251,7 +257,7 @@ fun EditServerScreen(
                             label = "Address / Host",
                             value = address,
                             onValueChange = { address = it },
-                            placeholder = "192.168.1.100",
+                            placeholder = "server.example.com",
                             modifier = Modifier.weight(2f)
                         )
 

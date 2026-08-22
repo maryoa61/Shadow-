@@ -144,7 +144,12 @@ class VpnRepository(
                 LogEntryEntity(timeFormatted = "14:02:17", level = "DBG", message = "Tearing down local listeners...")
             )
             logDao.insertLogs(initialLogs)
+        }
 
+        // Settings are independent from the server list.  For example, a restore may
+        // populate servers before this app version has written its settings row.
+        // Seed the row separately so the ViewModel always has persistent state.
+        if (appSettingsDao.getSettings().firstOrNull() == null) {
             appSettingsDao.saveSettings(AppSettingsEntity())
         }
     }
