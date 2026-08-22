@@ -56,6 +56,18 @@ android {
     compose = true
     buildConfig = true
   }
+  sourceSets.getByName("main").jniLibs.srcDir("src/main/jniLibs")
+  packaging {
+    jniLibs.useLegacyPackaging = true
+  }
+  splits {
+    abi {
+      isEnable = true
+      reset()
+      include("arm64-v8a", "armeabi-v7a", "x86", "x86_64")
+      isUniversalApk = false
+    }
+  }
   testOptions { unitTests { isIncludeAndroidResources = true } }
   dependenciesInfo {
     includeInApk = false
@@ -73,9 +85,23 @@ secrets {
 
 googleServices { missingGoogleServicesStrategy = MissingGoogleServicesStrategy.WARN }
 
+val fetchSingBoxCore by tasks.registering(Exec::class) {
+  group = "build setup"
+  description = "Fetches the pinned sing-box Android executables"
+  commandLine("bash", rootProject.file("scripts/fetch-vpn-cores.sh").absolutePath)
+  inputs.file(rootProject.file("scripts/fetch-vpn-cores.sh"))
+  outputs.file(project.file(".vpn-core-versions"))
+  outputs.dir(project.file("src/main/jniLibs"))
+}
+
+tasks.named("preBuild") { dependsOn(fetchSingBoxCore) }
+
 // Some unused dependencies are commented out below instead of being removed.
 // This makes it easy to add them back in the future if needed.
 dependencies {
+  // Xray owns the Android TUN; sing-box runs as an optional local proxy core
+  // behind that TUN, avoiding conflicting gomobile runtimes.
+  implementation("com.github.2dust:libv2ray:v26.8.20@aar")
   implementation(platform(libs.androidx.compose.bom))
   implementation(platform(libs.firebase.bom))
   // implementation(libs.accompanist.permissions)

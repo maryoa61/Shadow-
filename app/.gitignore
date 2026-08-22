@@ -1,1 +1,4 @@
 /build
+/libs/
+/src/main/jniLibs/
+/.vpn-core-versions

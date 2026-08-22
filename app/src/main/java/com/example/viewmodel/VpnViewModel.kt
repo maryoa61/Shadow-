@@ -9,61 +9,64 @@ import com.example.data.local.AppSettingsEntity
 import com.example.data.local.LogEntryEntity
 import com.example.data.local.ServerEntity
 import com.example.data.repository.VpnRepository
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.delay
+import com.example.vpn.ConnectionPhase
+import com.example.vpn.CoreEngine
+import com.example.vpn.ShadowVpnService
+import com.example.vpn.VpnRuntime
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
-import kotlin.random.Random
-
-private const val TELEMETRY_USAGE_INCREMENT_GB = 0.002
-
-internal fun nextTelemetryUsageGb(currentUsageGb: Double): Double =
-    Math.round((currentUsageGb + TELEMETRY_USAGE_INCREMENT_GB) * 1000.0) / 1000.0
+import kotlinx.coroutines.withContext
+import java.net.InetSocketAddress
+import java.net.Socket
 
 data class VpnUiState(
-    val isConnected: Boolean = true,
-    val connectionDurationSeconds: Long = 8078, // 02:14:38
-    val connectionDurationFormatted: String = "02:14:38",
-    val dlRateMbps: Double = 142.5,
-    val ulRateMbps: Double = 28.4,
-    val totalUsageGb: Double = 4.2,
+    val isConnected: Boolean = false,
+    val isConnecting: Boolean = false,
+    val connectionError: String? = null,
+    val preferredCore: String = CoreEngine.AUTO.persistedValue,
+    val activeCore: String? = null,
+    val connectionDurationSeconds: Long = 0,
+    val connectionDurationFormatted: String = "00:00:00",
+    val dlRateMbps: Double = 0.0,
+    val ulRateMbps: Double = 0.0,
+    val totalUsageGb: Double = 0.0,
     val usageLimitGb: Double = 10.0,
-    val pingMs: Int = 42,
-    val jitterMs: Int = 14,
-    val hopMode: String = "2-HOP", // 1-HOP, 2-HOP, DIRECT
-    val activeProtocolName: String = "XTLS-Reality + Vision",
-    val activeProtocolTag: String = "Best for Iran",
-    val flow: String = "xtls-rprx-vision",
+    val pingMs: Int = 0,
+    val jitterMs: Int = 0,
+    val hopMode: String = "1-HOP", // 1-HOP, 2-HOP, DIRECT
+    val activeProtocolName: String = "No server selected",
+    val activeProtocolTag: String = "Import a real configuration",
+    val flow: String = "",
     val muxState: String = "Incompatible",
     val muxEnabled: Boolean = false,
     val muxConcurrency: Int = 8,
     val fragmentEnabled: Boolean = true,
     val fragmentPackets: Int = 2,
-    val fragmentLength: String = "10-30/5-10",
+    val fragmentLength: String = "50-100",
     val fragmentIntervalMs: Int = 10,
     val utlsProfile: String = "Chrome",
     val echEnabled: Boolean = false,
-    val cleanIpOverride: String = "104.16.24.10",
+    val cleanIpOverride: String = "",
     val dohProvider: String = "Cloudflare",
-    val fakeIpEnabled: Boolean = true,
-    val domesticDnsFallback: String = "178.22.122.100",
+    val fakeIpEnabled: Boolean = false,
+    val domesticDnsFallback: String = "",
     val strictKillSwitch: Boolean = false,
-    val chainPreset: String = "Double-Hop NL",
-    val hop1Server: String = "NL-AMS-VLESS-01",
-    val hop1Proto: String = "tcp / xtls-rprx-vision",
-    val hop1Ping: Int = 12,
+    val chainPreset: String = "Single Hop",
+    val hop1Server: String = "Select Server...",
+    val hop1Proto: String = "",
+    val hop1Ping: Int = 0,
     val hop2Server: String = "Select Server...",
     val hop2Standby: Boolean = true,
     val currentFilterProtocol: String = "All",
     val searchQuery: String = "",
     val activeLogFilter: String = "ALL",
     val selectedServer: ServerEntity? = null,
-    val isCriticalState: Boolean = true,
+    val isCriticalState: Boolean = false,
     val isTestingCleanIp: Boolean = false,
     val cleanIpTestResult: String? = null
 )
@@ -76,9 +79,6 @@ class VpnViewModel(application: Application) : AndroidViewModel(application) {
 
     private val _uiState = MutableStateFlow(VpnUiState())
     val uiState: StateFlow<VpnUiState> = _uiState.asStateFlow()
-
-    private var simulationJob: Job? = null
-    private var timerJob: Job? = null
 
     init {
         val db = AppDatabase.getDatabase(application)
@@ -101,14 +101,9 @@ class VpnViewModel(application: Application) : AndroidViewModel(application) {
             repository.settings.collect { savedSettings ->
                 savedSettings?.let { s ->
                     _uiState.value = _uiState.value.copy(
-                        isConnected = s.isConnected,
-                        connectionDurationSeconds = s.connectedSeconds,
-                        connectionDurationFormatted = formatDuration(s.connectedSeconds),
-                        dlRateMbps = if (s.isConnected) s.dlRateMbps else 0.0,
-                        ulRateMbps = if (s.isConnected) s.ulRateMbps else 0.0,
-                        totalUsageGb = s.totalUsageGb,
                         usageLimitGb = s.usageLimitGb,
                         hopMode = s.hopMode,
+                        preferredCore = CoreEngine.fromPersisted(s.preferredCore).persistedValue,
                         muxEnabled = s.muxEnabled,
                         muxConcurrency = s.muxConcurrency,
                         fragmentEnabled = s.fragmentEnabled,
@@ -137,53 +132,33 @@ class VpnViewModel(application: Application) : AndroidViewModel(application) {
             repository.selectedServer.collect { server ->
                 _uiState.value = _uiState.value.copy(
                     selectedServer = server,
-                    pingMs = server?.pingMs ?: 42,
-                    activeProtocolName = if (server != null) "${server.protocol}+${server.security}" else "XTLS-Reality + Vision",
-                    activeProtocolTag = server?.bestForRegionTag ?: "Best for Iran"
+                    pingMs = if (_uiState.value.isConnected) _uiState.value.pingMs else 0,
+                    activeProtocolName = if (server != null) "${server.protocol}+${server.security}" else "No server selected",
+                    activeProtocolTag = server?.bestForRegionTag?.takeIf { it.isNotBlank() }
+                        ?: if (server == null) "Import a real configuration" else server.transport,
+                    flow = server?.flow.orEmpty()
                 )
             }
         }
 
-        startTelemetryLoop()
-    }
-
-    private fun startTelemetryLoop() {
-        timerJob?.cancel()
-        simulationJob?.cancel()
-
-        timerJob = viewModelScope.launch {
-            while (true) {
-                delay(1000)
-                if (_uiState.value.isConnected) {
-                    val newSec = _uiState.value.connectionDurationSeconds + 1
-                    _uiState.value = _uiState.value.copy(
-                        connectionDurationSeconds = newSec,
-                        connectionDurationFormatted = formatDuration(newSec)
-                    )
-                    // Persist long-running sessions without writing to Room every second.
-                    if (newSec % 30L == 0L) {
-                        saveCurrentSettings()
-                    }
-                }
-            }
-        }
-
-        simulationJob = viewModelScope.launch {
-            while (true) {
-                delay(2000)
-                if (_uiState.value.isConnected) {
-                    val dlVariation = Random.nextDouble(120.0, 165.0)
-                    val ulVariation = Random.nextDouble(20.0, 38.0)
-                    val newUsage = nextTelemetryUsageGb(_uiState.value.totalUsageGb)
-                    _uiState.value = _uiState.value.copy(
-                        dlRateMbps = Math.round(dlVariation * 10.0) / 10.0,
-                        ulRateMbps = Math.round(ulVariation * 10.0) / 10.0,
-                        // Keeping three decimal places prevents each 0.002 GB sample
-                        // from rounding back down and freezing the displayed total.
-                        totalUsageGb = newUsage,
-                        jitterMs = Random.nextInt(10, 18)
-                    )
-                }
+        viewModelScope.launch {
+            VpnRuntime.state.collect { runtime ->
+                val connected = runtime.phase == ConnectionPhase.CONNECTED
+                val connecting = runtime.phase in setOf(ConnectionPhase.STARTING, ConnectionPhase.VERIFYING)
+                _uiState.value = _uiState.value.copy(
+                    isConnected = connected,
+                    isConnecting = connecting,
+                    connectionError = runtime.error,
+                    activeCore = runtime.activeCore?.displayName,
+                    connectionDurationSeconds = runtime.elapsedSeconds,
+                    connectionDurationFormatted = formatDuration(runtime.elapsedSeconds),
+                    dlRateMbps = runtime.downloadBytesPerSecond * 8.0 / 1_000_000.0,
+                    ulRateMbps = runtime.uploadBytesPerSecond * 8.0 / 1_000_000.0,
+                    totalUsageGb = (runtime.totalDownloadBytes + runtime.totalUploadBytes) / 1_000_000_000.0,
+                    pingMs = runtime.pingMs ?: if (connected) _uiState.value.pingMs else 0,
+                    jitterMs = 0,
+                    isCriticalState = runtime.phase == ConnectionPhase.ERROR
+                )
             }
         }
     }
@@ -195,20 +170,36 @@ class VpnViewModel(application: Application) : AndroidViewModel(application) {
         return String.format("%02d:%02d:%02d", hours, minutes, seconds)
     }
 
-    fun toggleConnection() {
-        val newConnectedState = !_uiState.value.isConnected
-        _uiState.value = _uiState.value.copy(
-            isConnected = newConnectedState,
-            isCriticalState = if (newConnectedState) false else _uiState.value.isCriticalState,
-            dlRateMbps = if (newConnectedState) _uiState.value.dlRateMbps else 0.0,
-            ulRateMbps = if (newConnectedState) _uiState.value.ulRateMbps else 0.0
-        )
-        viewModelScope.launch {
-            val level = if (newConnectedState) "OK" else "INFO"
-            val msg = if (newConnectedState) "Tunnel securely established. Routing online." else "Tunnel manually disconnected by user."
-            repository.addLog(level, msg)
-            saveCurrentSettings()
+    fun startConnection() {
+        val selected = _uiState.value.selectedServer
+        if (selected == null) {
+            _uiState.value = _uiState.value.copy(
+                connectionError = "Add and select a real server before connecting."
+            )
+            return
         }
+        ShadowVpnService.start(
+            getApplication(),
+            CoreEngine.fromPersisted(_uiState.value.preferredCore)
+        )
+    }
+
+    fun stopConnection() {
+        ShadowVpnService.stop(getApplication())
+    }
+
+    fun reportVpnPermissionDenied() {
+        _uiState.value = _uiState.value.copy(
+            isConnecting = false,
+            connectionError = "VPN permission is required to create the secure tunnel."
+        )
+    }
+
+    fun setPreferredCore(value: String) {
+        val core = CoreEngine.fromPersisted(value)
+        if (_uiState.value.isConnected || _uiState.value.isConnecting) return
+        _uiState.value = _uiState.value.copy(preferredCore = core.persistedValue)
+        viewModelScope.launch { saveCurrentSettings() }
     }
 
     fun selectServer(server: ServerEntity) {
@@ -349,13 +340,22 @@ class VpnViewModel(application: Application) : AndroidViewModel(application) {
 
         viewModelScope.launch {
             _uiState.value = _uiState.value.copy(isTestingCleanIp = true, cleanIpTestResult = null)
-            delay(1200)
-            val ping = Random.nextInt(28, 55)
+            val result = withContext(Dispatchers.IO) {
+                runCatching {
+                    val started = System.nanoTime()
+                    Socket().use { socket ->
+                        socket.connect(InetSocketAddress(cleanIp, 443), 4000)
+                    }
+                    ((System.nanoTime() - started) / 1_000_000).coerceAtLeast(1)
+                }
+            }
+            val ping = result.getOrNull()
+            val message = if (ping != null) "TCP/443 reachable • RTT: ${ping}ms" else "TCP/443 unreachable"
             _uiState.value = _uiState.value.copy(
                 isTestingCleanIp = false,
-                cleanIpTestResult = "RTT: ${ping}ms (Clean IP OK)"
+                cleanIpTestResult = message
             )
-            repository.addLog("OK", "Clean IP $cleanIp verified reachable. RTT=${ping}ms")
+            repository.addLog(if (ping != null) "OK" else "ERR", "Clean IP $cleanIp: $message")
         }
     }
 
@@ -383,13 +383,16 @@ class VpnViewModel(application: Application) : AndroidViewModel(application) {
         val s = _uiState.value
         val entity = AppSettingsEntity(
             id = 1,
-            isConnected = s.isConnected,
-            connectedSeconds = s.connectionDurationSeconds,
-            dlRateMbps = s.dlRateMbps,
-            ulRateMbps = s.ulRateMbps,
-            totalUsageGb = s.totalUsageGb,
+            // Runtime connection state belongs to VpnService, not Room. Persisting
+            // "connected" caused the old UI to claim a tunnel after process death.
+            isConnected = false,
+            connectedSeconds = 0,
+            dlRateMbps = 0.0,
+            ulRateMbps = 0.0,
+            totalUsageGb = 0.0,
             usageLimitGb = s.usageLimitGb,
             hopMode = s.hopMode,
+            preferredCore = CoreEngine.fromPersisted(s.preferredCore).persistedValue,
             muxEnabled = s.muxEnabled,
             muxConcurrency = s.muxConcurrency,
             fragmentEnabled = s.fragmentEnabled,

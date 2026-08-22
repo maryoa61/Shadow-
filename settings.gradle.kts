@@ -19,6 +19,16 @@ dependencyResolutionManagement {
   repositories {
     google()
     mavenCentral()
+    // AndroidLibXrayLite publishes its AAR as a pinned GitHub release asset
+    // rather than a Maven module. Ivy artifact-only resolution lets Gradle
+    // fetch it reproducibly without committing a 59 MB binary to Git.
+    ivy {
+      name = "AndroidLibXrayLite"
+      url = uri("https://github.com/2dust/AndroidLibXrayLite/releases/download")
+      patternLayout { artifact("[revision]/[artifact].[ext]") }
+      metadataSources { artifact() }
+      content { includeGroup("com.github.2dust") }
+    }
   }
 }
 

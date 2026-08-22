@@ -36,7 +36,11 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -214,19 +218,22 @@ fun TacticalBottomNavBar(
 @Composable
 fun Sparkline(
     color: Color,
+    value: Double,
     modifier: Modifier = Modifier,
     isDownload: Boolean = true
 ) {
+    var points by remember(isDownload) { mutableStateOf(List(11) { 0f }) }
+    LaunchedEffect(value) {
+        // Display samples reported by VpnService instead of a decorative,
+        // fabricated traffic graph.
+        val normalized = (value / 200.0).toFloat().coerceIn(0f, 1f)
+        points = points.drop(1) + normalized
+    }
+
     Canvas(modifier = modifier) {
         val width = size.width
         val height = size.height
         val path = Path()
-
-        val points = if (isDownload) {
-            listOf(0.2f, 0.4f, 0.3f, 0.7f, 0.5f, 0.85f, 0.6f, 0.95f, 0.7f, 0.8f, 1.0f)
-        } else {
-            listOf(0.1f, 0.3f, 0.2f, 0.5f, 0.4f, 0.65f, 0.55f, 0.8f, 0.6f, 0.75f, 0.9f)
-        }
 
         val stepX = width / (points.size - 1)
         path.moveTo(0f, height - (points[0] * height * 0.8f))

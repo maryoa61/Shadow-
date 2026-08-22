@@ -89,8 +89,7 @@ fun ServersScreen(
     viewModel: VpnViewModel,
     uiState: VpnUiState,
     serverList: List<ServerEntity>,
-    onOpenEditServer: (ServerEntity?) -> Unit,
-    onOpenQrScanner: () -> Unit
+    onOpenEditServer: (ServerEntity?) -> Unit
 ) {
     var expandedServerId by remember { mutableStateOf<Long?>(null) }
 
@@ -232,22 +231,6 @@ fun ServersScreen(
                 )
             }
 
-            FloatingActionButton(
-                onClick = onOpenQrScanner,
-                containerColor = PrimaryContainer,
-                contentColor = Color(0xFF001D36),
-                shape = RoundedCornerShape(20.dp),
-                modifier = Modifier
-                    .size(56.dp)
-                    .border(1.dp, PrimaryCobalt.copy(alpha = 0.3f), RoundedCornerShape(20.dp))
-                    .testTag("qr_scanner_fab")
-            ) {
-                Icon(
-                    imageVector = Icons.Default.QrCodeScanner,
-                    contentDescription = "QR Scanner",
-                    modifier = Modifier.size(26.dp)
-                )
-            }
         }
     }
 }
@@ -350,9 +333,9 @@ fun ServerListItemCard(
                             PulsingStatusDot(color = SecondaryEmerald, size = 6)
                         }
                         Text(
-                            text = "${server.pingMs}ms",
+                            text = if (server.pingMs > 0) "${server.pingMs}ms" else "--",
                             style = MonoMetrics.copy(fontWeight = FontWeight.Bold),
-                            color = pingColor
+                            color = if (server.pingMs > 0) pingColor else TextOutline
                         )
                     }
 
@@ -430,7 +413,7 @@ fun ServerListItemCard(
                             )
                             Spacer(modifier = Modifier.width(6.dp))
                             Text(
-                                text = if (server.isSelected) "ACTIVE NODE" else "CONNECT TO NODE",
+                                text = if (server.isSelected) "SELECTED" else "SELECT NODE",
                                 style = MaterialTheme.typography.labelMedium,
                                 fontWeight = FontWeight.Bold
                             )
@@ -495,7 +478,7 @@ fun MetricSmallBox(
                 color = TextSecondary
             )
             Text(
-                text = value,
+                text = value.ifBlank { "--" },
                 style = MonoMetrics.copy(fontSize = 12.sp, fontWeight = FontWeight.Bold),
                 color = valueColor,
                 modifier = Modifier.padding(top = 2.dp)
