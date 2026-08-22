@@ -68,6 +68,7 @@ import com.example.ui.theme.ErrorRed
 import com.example.ui.theme.MonoMetrics
 import com.example.ui.theme.MonoMetricsSmall
 import com.example.ui.theme.OnPrimary
+import com.example.ui.theme.OnPrimaryContainer
 import com.example.ui.theme.OutlineVariant
 import com.example.ui.theme.PrimaryCobalt
 import com.example.ui.theme.PrimaryContainer
@@ -142,7 +143,7 @@ fun ToolkitScreen(
                             ToolkitSubTab.SYSTEM_LOGS -> "Logs"
                         },
                         style = MaterialTheme.typography.labelSmall,
-                        color = if (isSelected) Color(0xFF001D36) else TextSecondary,
+                        color = if (isSelected) OnPrimaryContainer else TextSecondary,
                         fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium
                     )
                 }
@@ -202,7 +203,7 @@ fun MultiHopMatrixView(
                 Text(
                     text = "ACTIVE TOPOLOGY",
                     style = MaterialTheme.typography.labelSmall.copy(letterSpacing = 0.8.sp, fontSize = 9.sp),
-                    color = Color(0xFF001D36),
+                    color = OnPrimaryContainer,
                     fontWeight = FontWeight.Bold
                 )
             }
@@ -241,7 +242,7 @@ fun MultiHopMatrixView(
                         Text(
                             text = preset,
                             style = MonoMetrics,
-                            color = if (isSelected) Color(0xFF001D36) else TextSecondary,
+                            color = if (isSelected) OnPrimaryContainer else TextSecondary,
                             fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal
                         )
                     }
@@ -306,7 +307,7 @@ fun MultiHopMatrixView(
                                     .background(PrimaryContainer)
                                     .padding(horizontal = 6.dp, vertical = 2.dp)
                             ) {
-                                Text("HOP_01", style = MaterialTheme.typography.labelSmall, color = Color(0xFF001D36), fontWeight = FontWeight.Bold)
+                                Text("HOP_01", style = MaterialTheme.typography.labelSmall, color = OnPrimaryContainer, fontWeight = FontWeight.Bold)
                             }
                             Row(
                                 verticalAlignment = Alignment.CenterVertically,
@@ -761,7 +762,7 @@ fun AntiDpiToolkitView(
                                     .background(PrimaryContainer)
                                     .padding(horizontal = 5.dp, vertical = 1.dp)
                             ) {
-                                Text("BETA", style = MaterialTheme.typography.labelSmall.copy(fontSize = 9.sp), color = Color(0xFF001D36), fontWeight = FontWeight.Bold)
+                                Text("BETA", style = MaterialTheme.typography.labelSmall.copy(fontSize = 9.sp), color = OnPrimaryContainer, fontWeight = FontWeight.Bold)
                             }
                         }
                         Text("Requires server-side support.", style = MonoMetricsSmall, color = TextSecondary)
@@ -847,7 +848,7 @@ fun AntiDpiToolkitView(
                                 Text(
                                     text = provider,
                                     style = MonoMetrics,
-                                    color = if (isSelected) Color(0xFF001D36) else TextSecondary,
+                                    color = if (isSelected) OnPrimaryContainer else TextSecondary,
                                     fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal
                                 )
                             }
@@ -1169,7 +1170,7 @@ fun SystemLogsView(
                             }
                             val textCol = when {
                                 isSelected && filter == "ERROR" -> ErrorRed
-                                isSelected -> Color(0xFF001D36)
+                                isSelected -> OnPrimaryContainer
                                 else -> TextSecondary
                             }
                             Box(

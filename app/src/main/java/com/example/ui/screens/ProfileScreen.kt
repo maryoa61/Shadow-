@@ -53,6 +53,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.ui.components.PulsingStatusDot
 import com.example.ui.components.TacticalGlassCard
+import com.example.ui.theme.OnPrimaryContainer
 import com.example.ui.theme.BackgroundDeep
 import com.example.ui.theme.ErrorRed
 import com.example.ui.theme.MonoMetrics
@@ -125,12 +126,12 @@ fun ProfileScreen(
                     Text(
                         text = "SHADOW_NET",
                         style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold),
-                        color = Color(0xFF001D36)
+                        color = OnPrimaryContainer
                     )
                     Text(
                         text = "Next-Gen Anti-Censorship Proxy Core",
                         style = MaterialTheme.typography.bodySmall,
-                        color = Color(0xFF001D36).copy(alpha = 0.8f)
+                        color = OnPrimaryContainer.copy(alpha = 0.8f)
                     )
                     Row(
                         verticalAlignment = Alignment.CenterVertically,

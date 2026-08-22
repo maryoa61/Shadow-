@@ -29,10 +29,10 @@ import com.example.ui.components.TacticalBottomNavBar
 import com.example.ui.components.TacticalTopAppBar
 import com.example.ui.screens.EditServerScreen
 import com.example.ui.screens.HomeScreen
-import com.example.ui.screens.ProfileScreen
+import com.example.ui.screens.LogsScreen
 import com.example.ui.screens.QrScannerDialog
 import com.example.ui.screens.ServersScreen
-import com.example.ui.screens.ToolkitScreen
+import com.example.ui.screens.SettingsScreen
 import com.example.ui.theme.BackgroundDeep
 import com.example.ui.theme.MyApplicationTheme
 import com.example.viewmodel.VpnViewModel
@@ -124,13 +124,13 @@ fun ShadowNetApp(vpnViewModel: VpnViewModel = viewModel()) {
                             }
                         )
 
-                        NavigationTab.TOOLKIT -> ToolkitScreen(
+                        NavigationTab.LOGS -> LogsScreen(
                             viewModel = vpnViewModel,
                             uiState = uiState,
-                            logList = logList
+                            logs = logList
                         )
 
-                        NavigationTab.PROFILE -> ProfileScreen(
+                        NavigationTab.SETTINGS -> SettingsScreen(
                             viewModel = vpnViewModel,
                             uiState = uiState
                         )

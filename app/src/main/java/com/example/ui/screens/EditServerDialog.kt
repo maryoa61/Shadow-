@@ -66,6 +66,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.data.local.ServerEntity
 import com.example.ui.components.TacticalGlassCard
+import com.example.ui.theme.OnPrimaryContainer
 import com.example.ui.theme.BackgroundDeep
 import com.example.ui.theme.ErrorContainer
 import com.example.ui.theme.ErrorRed
@@ -330,7 +331,7 @@ fun EditServerScreen(
                                 Text(
                                     text = proto,
                                     style = MonoMetrics,
-                                    color = if (isSelected) Color(0xFF001D36) else TextSecondary,
+                                    color = if (isSelected) OnPrimaryContainer else TextSecondary,
                                     fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal
                                 )
                             }
@@ -359,7 +360,7 @@ fun EditServerScreen(
                             Text(
                                 text = "$selectedProtocol protocol selected. Ensure parameters match server.",
                                 style = MonoMetricsSmall,
-                                color = Color(0xFF001D36)
+                                color = OnPrimaryContainer
                             )
                         }
                     }
@@ -418,7 +419,7 @@ fun EditServerScreen(
                                 Text(
                                     text = sec,
                                     style = MonoMetrics,
-                                    color = if (isSelected) Color(0xFF001D36) else TextSecondary,
+                                    color = if (isSelected) OnPrimaryContainer else TextSecondary,
                                     fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal
                                 )
                             }
@@ -545,7 +546,7 @@ fun EditServerScreen(
                                 Text(
                                     text = t,
                                     style = MonoMetricsSmall,
-                                    color = if (isSelected) Color(0xFF001D36) else TextSecondary,
+                                    color = if (isSelected) OnPrimaryContainer else TextSecondary,
                                     fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal
                                 )
                             }

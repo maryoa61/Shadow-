@@ -190,7 +190,7 @@ fun ConnectionHeroCard(
                     Text(
                         text = "SECURE LINK ACTIVE",
                         style = MaterialTheme.typography.labelSmall.copy(letterSpacing = 1.2.sp),
-                        color = Color(0xFF001D36),
+                        color = OnPrimaryContainer,
                         fontWeight = FontWeight.Bold
                     )
                 } else {
@@ -214,7 +214,7 @@ fun ConnectionHeroCard(
             Text(
                 text = if (uiState.isConnected) uiState.connectionDurationFormatted else "00:00:00",
                 style = MonoMetricsLarge,
-                color = if (uiState.isConnected) Color(0xFF001D36) else TextPrimary,
+                color = if (uiState.isConnected) OnPrimaryContainer else TextPrimary,
                 fontSize = 38.sp,
                 modifier = Modifier.padding(bottom = 18.dp)
             )
@@ -257,7 +257,7 @@ fun ConnectionHeroCard(
             Text(
                 text = if (uiState.isConnected) "TAP TO DISCONNECT" else "TAP TO CONNECT",
                 style = MaterialTheme.typography.labelSmall,
-                color = if (uiState.isConnected) Color(0xFF001D36).copy(alpha = 0.8f) else TextSecondary,
+                color = if (uiState.isConnected) OnPrimaryContainer.copy(alpha = 0.8f) else TextSecondary,
                 fontWeight = FontWeight.Bold,
                 letterSpacing = 1.sp,
                 modifier = Modifier.padding(top = 12.dp)
@@ -551,7 +551,7 @@ fun ActiveServerCard(
                                     Text(
                                         text = proto,
                                         style = MaterialTheme.typography.labelSmall.copy(fontSize = 10.sp),
-                                        color = Color(0xFF001D36),
+                                        color = OnPrimaryContainer,
                                         fontWeight = FontWeight.Bold
                                     )
                                 }
@@ -832,7 +832,7 @@ fun RoutingChainSelector(
                         Text(
                             text = mode,
                             style = MaterialTheme.typography.labelSmall,
-                            color = if (isSelected) Color(0xFF001D36) else TextSecondary,
+                            color = if (isSelected) OnPrimaryContainer else TextSecondary,
                             fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium
                         )
                     }
@@ -932,7 +932,7 @@ fun TechnicalReadoutCard(uiState: VpnUiState) {
                                 .clip(RoundedCornerShape(2.dp))
                                 .background(
                                     Brush.horizontalGradient(
-                                        listOf(SecondaryEmerald, PrimaryCobalt, Color(0xFF001D36))
+                                        listOf(SecondaryEmerald, PrimaryCobalt, OnPrimaryContainer)
                                     )
                                 )
                         )

@@ -2,14 +2,14 @@ package com.example.ui.theme
 
 import android.app.Activity
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.lightColorScheme
+import androidx.compose.material3.darkColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.SideEffect
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalView
 import androidx.core.view.WindowCompat
 
-private val SleekLightColorScheme = lightColorScheme(
+private val SleekDarkColorScheme = darkColorScheme(
     primary = PrimaryCobalt,
     onPrimary = OnPrimary,
     primaryContainer = PrimaryContainer,
@@ -45,13 +45,13 @@ fun MyApplicationTheme(
             val window = (view.context as Activity).window
             window.statusBarColor = BackgroundDeep.toArgb()
             window.navigationBarColor = SurfaceContainer.toArgb()
-            WindowCompat.getInsetsController(window, view).isAppearanceLightStatusBars = true
-            WindowCompat.getInsetsController(window, view).isAppearanceLightNavigationBars = true
+            WindowCompat.getInsetsController(window, view).isAppearanceLightStatusBars = false
+            WindowCompat.getInsetsController(window, view).isAppearanceLightNavigationBars = false
         }
     }
 
     MaterialTheme(
-        colorScheme = SleekLightColorScheme,
+        colorScheme = SleekDarkColorScheme,
         typography = Typography,
         content = content
     )

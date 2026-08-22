@@ -64,6 +64,7 @@ import com.example.ui.theme.GrpcPink
 import com.example.ui.theme.MonoMetrics
 import com.example.ui.theme.MonoMetricsSmall
 import com.example.ui.theme.OnPrimary
+import com.example.ui.theme.OnPrimaryContainer
 import com.example.ui.theme.OutlineVariant
 import com.example.ui.theme.PrimaryCobalt
 import com.example.ui.theme.PrimaryContainer
@@ -175,7 +176,7 @@ fun ServersScreen(
                             Text(
                                 text = filter,
                                 style = MaterialTheme.typography.labelSmall,
-                                color = if (isSelected) Color(0xFF001D36) else TextSecondary,
+                                color = if (isSelected) OnPrimaryContainer else TextSecondary,
                                 fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium
                             )
                         }
@@ -235,7 +236,7 @@ fun ServersScreen(
             FloatingActionButton(
                 onClick = onOpenQrScanner,
                 containerColor = PrimaryContainer,
-                contentColor = Color(0xFF001D36),
+                contentColor = OnPrimaryContainer,
                 shape = RoundedCornerShape(20.dp),
                 modifier = Modifier
                     .size(56.dp)
@@ -323,7 +324,7 @@ fun ServerListItemCard(
                                 Text(
                                     text = server.protocol.uppercase(),
                                     style = MaterialTheme.typography.labelSmall.copy(fontSize = 9.sp),
-                                    color = Color(0xFF001D36),
+                                    color = OnPrimaryContainer,
                                     fontWeight = FontWeight.Bold
                                 )
                             }
@@ -416,7 +417,7 @@ fun ServerListItemCard(
                             onClick = onSelect,
                             colors = ButtonDefaults.buttonColors(
                                 containerColor = if (server.isSelected) PrimaryContainer else PrimaryCobalt,
-                                contentColor = if (server.isSelected) Color(0xFF001D36) else Color.White
+                                contentColor = if (server.isSelected) OnPrimaryContainer else Color.White
                             ),
                             shape = RoundedCornerShape(12.dp),
                             modifier = Modifier

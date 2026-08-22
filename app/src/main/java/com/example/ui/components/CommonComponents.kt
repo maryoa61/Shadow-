@@ -26,7 +26,8 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Dns
-import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.Article
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Security
 import androidx.compose.material.icons.filled.SettingsInputAntenna
 import androidx.compose.material.icons.filled.Speed
@@ -54,6 +55,7 @@ import androidx.compose.ui.unit.sp
 import com.example.ui.theme.BackgroundDeep
 import com.example.ui.theme.MonoMetrics
 import com.example.ui.theme.OutlineVariant
+import com.example.ui.theme.OnPrimaryContainer
 import com.example.ui.theme.PrimaryCobalt
 import com.example.ui.theme.PrimaryContainer
 import com.example.ui.theme.PrimaryViolet
@@ -144,8 +146,8 @@ fun TacticalTopAppBar(
 enum class NavigationTab(val label: String, val icon: ImageVector) {
     HOME("Home", Icons.Default.Speed),
     SERVERS("Servers", Icons.Default.Dns),
-    TOOLKIT("Toolkit", Icons.Default.Terminal),
-    PROFILE("Profile", Icons.Default.Person)
+    LOGS("Logs", Icons.Default.Article),
+    SETTINGS("Settings", Icons.Default.Settings)
 }
 
 @Composable
@@ -194,14 +196,14 @@ fun TacticalBottomNavBar(
                             Icon(
                                 imageVector = tab.icon,
                                 contentDescription = tab.label,
-                                tint = if (isSelected) Color(0xFF001D36) else TextSecondary,
+                                tint = if (isSelected) OnPrimaryContainer else TextSecondary,
                                 modifier = Modifier.size(22.dp)
                             )
                         }
                         Text(
                             text = tab.label,
                             style = MaterialTheme.typography.labelSmall,
-                            color = if (isSelected) Color(0xFF001D36) else TextSecondary,
+                            color = if (isSelected) OnPrimaryContainer else TextSecondary,
                             fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium
                         )
                     }
