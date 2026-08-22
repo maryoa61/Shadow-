@@ -55,6 +55,8 @@ class VpnRepositoryTest {
     @Test
     fun `deleting selected server selects a remaining fallback`() = runTest {
         repository.initializeDefaultDataIfEmpty()
+        repository.insertServer(testServer(alias = "First"))
+        repository.insertServer(testServer(alias = "Second"))
         val selectedBefore = repository.selectedServer.first()
         assertNotNull(selectedBefore)
 
@@ -63,7 +65,15 @@ class VpnRepositoryTest {
         val selectedAfter = repository.selectedServer.first()
         assertNotNull(selectedAfter)
         assertNotEquals(selectedBefore.id, selectedAfter!!.id)
-        assertEquals(3, repository.allServers.first().size)
+        assertEquals(1, repository.allServers.first().size)
+    }
+
+    @Test
+    fun `initialization never seeds fabricated vpn servers`() = runTest {
+        repository.initializeDefaultDataIfEmpty()
+
+        assertTrue(repository.allServers.first().isEmpty())
+        assertNotNull(repository.settings.first())
     }
 
     @Test

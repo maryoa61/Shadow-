@@ -1,8 +1,12 @@
 package com.example
 
+import android.app.Activity
+import android.net.VpnService
 import android.os.Bundle
 import android.widget.Toast
 import androidx.activity.ComponentActivity
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.animation.AnimatedContent
@@ -30,7 +34,6 @@ import com.example.ui.components.TacticalTopAppBar
 import com.example.ui.screens.EditServerScreen
 import com.example.ui.screens.HomeScreen
 import com.example.ui.screens.ProfileScreen
-import com.example.ui.screens.QrScannerDialog
 import com.example.ui.screens.ServersScreen
 import com.example.ui.screens.ToolkitScreen
 import com.example.ui.theme.BackgroundDeep
@@ -59,7 +62,16 @@ fun ShadowNetApp(vpnViewModel: VpnViewModel = viewModel()) {
     var currentTab by remember { mutableStateOf(NavigationTab.HOME) }
     var editingServer by remember { mutableStateOf<ServerEntity?>(null) }
     var isEditingServerOpen by remember { mutableStateOf(false) }
-    var isQrScannerOpen by remember { mutableStateOf(false) }
+
+    val vpnPermissionLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.StartActivityForResult()
+    ) { result ->
+        if (result.resultCode == Activity.RESULT_OK) {
+            vpnViewModel.startConnection()
+        } else {
+            vpnViewModel.reportVpnPermissionDenied()
+        }
+    }
 
     Box(
         modifier = Modifier
@@ -73,14 +85,22 @@ fun ShadowNetApp(vpnViewModel: VpnViewModel = viewModel()) {
                     onLeftIconClick = {
                         Toast.makeText(
                             context,
-                            "Zero-Knowledge Tunnel Active (${uiState.activeProtocolName})",
+                            if (uiState.isConnected) {
+                                "VPN active • ${uiState.activeCore} • ${uiState.activeProtocolName}"
+                            } else {
+                                "VPN disconnected"
+                            },
                             Toast.LENGTH_SHORT
                         ).show()
                     },
                     onRightIconClick = {
                         Toast.makeText(
                             context,
-                            "Latency RTT: ${uiState.pingMs}ms | Jitter: ${uiState.jitterMs}ms",
+                            if (uiState.isConnected) {
+                                "Verified route RTT: ${uiState.pingMs}ms"
+                            } else {
+                                "No active VPN route"
+                            },
                             Toast.LENGTH_SHORT
                         ).show()
                     }
@@ -108,7 +128,30 @@ fun ShadowNetApp(vpnViewModel: VpnViewModel = viewModel()) {
                         NavigationTab.HOME -> HomeScreen(
                             viewModel = vpnViewModel,
                             uiState = uiState,
-                            onNavigateToServers = { currentTab = NavigationTab.SERVERS }
+                            onNavigateToServers = { currentTab = NavigationTab.SERVERS },
+                            onToggleConnection = {
+                                when {
+                                    uiState.isConnected || uiState.isConnecting -> {
+                                        vpnViewModel.stopConnection()
+                                    }
+                                    uiState.selectedServer == null -> {
+                                        Toast.makeText(
+                                            context,
+                                            "Add and select a real server first",
+                                            Toast.LENGTH_SHORT
+                                        ).show()
+                                        currentTab = NavigationTab.SERVERS
+                                    }
+                                    else -> {
+                                        val permissionIntent = VpnService.prepare(context)
+                                        if (permissionIntent == null) {
+                                            vpnViewModel.startConnection()
+                                        } else {
+                                            vpnPermissionLauncher.launch(permissionIntent)
+                                        }
+                                    }
+                                }
+                            }
                         )
 
                         NavigationTab.SERVERS -> ServersScreen(
@@ -118,9 +161,6 @@ fun ShadowNetApp(vpnViewModel: VpnViewModel = viewModel()) {
                             onOpenEditServer = { server ->
                                 editingServer = server
                                 isEditingServerOpen = true
-                            },
-                            onOpenQrScanner = {
-                                isQrScannerOpen = true
                             }
                         )
 
@@ -152,14 +192,5 @@ fun ShadowNetApp(vpnViewModel: VpnViewModel = viewModel()) {
             )
         }
 
-        // QR Scanner Overlay
-        if (isQrScannerOpen) {
-            QrScannerDialog(
-                viewModel = vpnViewModel,
-                onDismiss = {
-                    isQrScannerOpen = false
-                }
-            )
-        }
     }
 }

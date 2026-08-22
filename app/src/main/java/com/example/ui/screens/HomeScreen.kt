@@ -41,6 +41,7 @@ import androidx.compose.material.icons.filled.SwapHoriz
 import androidx.compose.material.icons.filled.Terminal
 import androidx.compose.material.icons.filled.Timeline
 import androidx.compose.material.icons.filled.Upload
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
@@ -66,6 +67,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.ui.components.FlagBadge
 import com.example.ui.components.PulsingStatusDot
 import com.example.ui.components.Sparkline
 import com.example.ui.components.TacticalGlassCard
@@ -96,13 +98,15 @@ import com.example.ui.theme.TextSecondary
 import com.example.ui.theme.VlessCyan
 import com.example.viewmodel.VpnUiState
 import com.example.viewmodel.VpnViewModel
+import com.example.vpn.CoreEngine
 import java.util.Locale
 
 @Composable
 fun HomeScreen(
     viewModel: VpnViewModel,
     uiState: VpnUiState,
-    onNavigateToServers: () -> Unit
+    onNavigateToServers: () -> Unit,
+    onToggleConnection: () -> Unit
 ) {
     val scrollState = rememberScrollState()
     var utlsDropdownExpanded by remember { mutableStateOf(false) }
@@ -117,7 +121,14 @@ fun HomeScreen(
         // Main Connection Hero Card (Sleek Theme Sky Blue Banner)
         ConnectionHeroCard(
             uiState = uiState,
-            onToggleConnection = { viewModel.toggleConnection() }
+            onToggleConnection = onToggleConnection
+        )
+
+        CoreEngineSelector(
+            selectedCore = uiState.preferredCore,
+            activeCore = uiState.activeCore,
+            enabled = !uiState.isConnected && !uiState.isConnecting,
+            onSelect = viewModel::setPreferredCore
         )
 
         // Telemetry Metrics Grid (DL Rate, UL Rate, Total Usage)
@@ -136,12 +147,6 @@ fun HomeScreen(
             onSelectUtls = { viewModel.setUtlsProfile(it) },
             utlsDropdownExpanded = utlsDropdownExpanded,
             onSetUtlsDropdown = { utlsDropdownExpanded = it }
-        )
-
-        // Routing Chain Mode Selector
-        RoutingChainSelector(
-            currentMode = uiState.hopMode,
-            onSelectMode = { viewModel.setHopMode(it) }
         )
 
         // Technical Readout & Connection Map
@@ -185,29 +190,46 @@ fun ConnectionHeroCard(
                 horizontalArrangement = Arrangement.Center,
                 modifier = Modifier.padding(bottom = 8.dp)
             ) {
-                if (uiState.isConnected) {
-                    PulsingStatusDot(color = SecondaryEmerald, size = 8)
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text(
-                        text = "SECURE LINK ACTIVE",
-                        style = MaterialTheme.typography.labelSmall.copy(letterSpacing = 1.2.sp),
-                        color = Color(0xFF001D36),
-                        fontWeight = FontWeight.Bold
-                    )
-                } else {
-                    Box(
-                        modifier = Modifier
-                            .size(8.dp)
-                            .clip(CircleShape)
-                            .background(TextOutline)
-                    )
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text(
-                        text = "DISCONNECTED - STANDBY",
-                        style = MaterialTheme.typography.labelSmall.copy(letterSpacing = 1.2.sp),
-                        color = TextSecondary,
-                        fontWeight = FontWeight.Bold
-                    )
+                when {
+                    uiState.isConnected -> {
+                        PulsingStatusDot(color = SecondaryEmerald, size = 8)
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            text = "SECURE LINK ACTIVE • ${uiState.activeCore.orEmpty()}",
+                            style = MaterialTheme.typography.labelSmall.copy(letterSpacing = 1.2.sp),
+                            color = Color(0xFF001D36),
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
+                    uiState.isConnecting -> {
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(14.dp),
+                            color = PrimaryCobalt,
+                            strokeWidth = 2.dp
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            text = "STARTING AND VERIFYING TUNNEL",
+                            style = MaterialTheme.typography.labelSmall.copy(letterSpacing = 1.sp),
+                            color = PrimaryCobalt,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
+                    else -> {
+                        Box(
+                            modifier = Modifier
+                                .size(8.dp)
+                                .clip(CircleShape)
+                                .background(if (uiState.connectionError != null) ErrorRed else TextOutline)
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            text = if (uiState.connectionError != null) "CONNECTION FAILED" else "DISCONNECTED - STANDBY",
+                            style = MaterialTheme.typography.labelSmall.copy(letterSpacing = 1.2.sp),
+                            color = if (uiState.connectionError != null) ErrorRed else TextSecondary,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
                 }
             }
 
@@ -241,29 +263,113 @@ fun ConnectionHeroCard(
                     modifier = Modifier
                         .size(84.dp)
                         .clip(CircleShape)
-                        .background(if (uiState.isConnected) ErrorRed else PrimaryCobalt)
+                        .background(if (uiState.isConnected || uiState.isConnecting) ErrorRed else PrimaryCobalt)
                         .clickable { onToggleConnection() }
                         .testTag("connect_toggle_button"),
                     contentAlignment = Alignment.Center
                 ) {
-                    Icon(
-                        imageVector = if (uiState.isConnected) Icons.Default.Stop else Icons.Default.PowerSettingsNew,
-                        contentDescription = if (uiState.isConnected) "Disconnect" else "Connect",
-                        tint = Color.White,
-                        modifier = Modifier.size(36.dp)
-                    )
+                    if (uiState.isConnecting) {
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(34.dp),
+                            color = Color.White,
+                            strokeWidth = 3.dp
+                        )
+                    } else {
+                        Icon(
+                            imageVector = if (uiState.isConnected) Icons.Default.Stop else Icons.Default.PowerSettingsNew,
+                            contentDescription = if (uiState.isConnected) "Disconnect" else "Connect",
+                            tint = Color.White,
+                            modifier = Modifier.size(36.dp)
+                        )
+                    }
                 }
             }
 
             Text(
-                text = if (uiState.isConnected) "TAP TO DISCONNECT" else "TAP TO CONNECT",
+                text = when {
+                    uiState.isConnected -> "TAP TO DISCONNECT"
+                    uiState.isConnecting -> "TAP TO CANCEL"
+                    else -> "TAP TO CONNECT"
+                },
                 style = MaterialTheme.typography.labelSmall,
                 color = if (uiState.isConnected) Color(0xFF001D36).copy(alpha = 0.8f) else TextSecondary,
                 fontWeight = FontWeight.Bold,
                 letterSpacing = 1.sp,
                 modifier = Modifier.padding(top = 12.dp)
             )
+
+            AnimatedVisibility(visible = uiState.connectionError != null) {
+                Text(
+                    text = uiState.connectionError.orEmpty(),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = ErrorRed,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier.padding(top = 10.dp)
+                )
+            }
         }
+    }
+}
+
+@Composable
+fun CoreEngineSelector(
+    selectedCore: String,
+    activeCore: String?,
+    enabled: Boolean,
+    onSelect: (String) -> Unit
+) {
+    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            Text(
+                text = "VPN CORE",
+                style = MaterialTheme.typography.labelSmall,
+                color = TextSecondary,
+                letterSpacing = 1.2.sp,
+                fontWeight = FontWeight.Bold
+            )
+            if (activeCore != null) {
+                Text("RUNNING: $activeCore", style = MonoMetricsSmall, color = SecondaryEmerald)
+            }
+        }
+        TacticalGlassCard(modifier = Modifier.fillMaxWidth()) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                CoreEngine.entries.forEach { core ->
+                    val selected = selectedCore == core.persistedValue
+                    Box(
+                        modifier = Modifier
+                            .weight(1f)
+                            .clip(RoundedCornerShape(12.dp))
+                            .background(if (selected) PrimaryContainer else SurfaceBright)
+                            .border(
+                                1.dp,
+                                if (selected) PrimaryCobalt else OutlineVariant,
+                                RoundedCornerShape(12.dp)
+                            )
+                            .clickable(enabled = enabled) { onSelect(core.persistedValue) }
+                            .padding(vertical = 9.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = core.displayName,
+                            style = MonoMetricsSmall,
+                            color = if (selected) Color(0xFF001D36) else if (enabled) TextSecondary else TextOutline,
+                            fontWeight = if (selected) FontWeight.Bold else FontWeight.Medium
+                        )
+                    }
+                }
+            }
+        }
+        Text(
+            text = "AUTO verifies the route and falls back to the other compatible core if startup fails.",
+            style = MaterialTheme.typography.bodySmall,
+            color = TextSecondary
+        )
     }
 }
 
@@ -340,6 +446,7 @@ fun MetricsGridSection(uiState: VpnUiState) {
                     }
                     Sparkline(
                         color = SecondaryEmerald,
+                        value = uiState.dlRateMbps,
                         modifier = Modifier
                             .fillMaxWidth()
                             .height(26.dp),
@@ -403,6 +510,7 @@ fun MetricsGridSection(uiState: VpnUiState) {
                     }
                     Sparkline(
                         color = PrimaryCobalt,
+                        value = uiState.ulRateMbps,
                         modifier = Modifier
                             .fillMaxWidth()
                             .height(26.dp),
@@ -486,12 +594,12 @@ fun ActiveServerCard(
     onSwapServer: () -> Unit
 ) {
     val server = uiState.selectedServer
-    val serverName = server?.alias ?: "Frankfurt Edge 1"
-    val proto = if (server != null) "${server.protocol}+${server.security}" else "VLESS+Reality"
-    val regionTag = server?.bestForRegionTag ?: "Best for Performance"
-    val rtt = server?.pingMs ?: uiState.pingMs
-    val capacity = server?.capacity ?: "120Mbps"
-    val ip = server?.ipAddress ?: "185.12.x.x"
+    val serverName = server?.alias ?: "No server selected"
+    val proto = if (server != null) "${server.protocol}+${server.security}" else "NOT CONFIGURED"
+    val regionTag = server?.bestForRegionTag?.takeIf { it.isNotBlank() } ?: "Add a real server"
+    val rtt = if (uiState.isConnected) uiState.pingMs else 0
+    val capacity = server?.capacity?.takeIf { it.isNotBlank() } ?: "--"
+    val ip = server?.ipAddress?.takeIf { it.isNotBlank() } ?: "--"
 
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
         Text(
@@ -519,19 +627,10 @@ fun ActiveServerCard(
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.spacedBy(12.dp)
                     ) {
-                        Box(
-                            modifier = Modifier
-                                .size(42.dp)
-                                .clip(RoundedCornerShape(12.dp))
-                                .background(SurfaceBright)
-                                .border(1.dp, OutlineVariant, RoundedCornerShape(12.dp)),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Text(
-                                text = "🇩🇪",
-                                fontSize = 22.sp
-                            )
-                        }
+                        FlagBadge(
+                            countryCode = server?.countryCode.orEmpty(),
+                            modifier = Modifier.size(42.dp)
+                        )
 
                         Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
                             Text(
@@ -598,7 +697,7 @@ fun ActiveServerCard(
                 ) {
                     Column {
                         Text("LATENCY", style = MaterialTheme.typography.labelSmall, color = TextSecondary)
-                        Text("${rtt}ms", style = MonoMetrics.copy(fontWeight = FontWeight.Bold), color = SecondaryEmerald)
+                        Text(if (rtt > 0) "${rtt}ms" else "--", style = MonoMetrics.copy(fontWeight = FontWeight.Bold), color = SecondaryEmerald)
                     }
                     Column {
                         Text("CAPACITY", style = MaterialTheme.typography.labelSmall, color = TextSecondary)
@@ -664,7 +763,7 @@ fun ConfigurationSection(
                     }
                     Column {
                         Text("Packet Fragmentation", style = MaterialTheme.typography.bodyMedium, color = TextPrimary, fontWeight = FontWeight.SemiBold)
-                        Text(uiState.fragmentLength, style = MonoMetricsSmall, color = PrimaryCobalt)
+                        Text("${uiState.fragmentLength} • Xray", style = MonoMetricsSmall, color = PrimaryCobalt)
                     }
                 }
 
@@ -878,7 +977,7 @@ fun TechnicalReadoutCard(uiState: VpnUiState) {
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
                     Text("Flow Control:", style = MaterialTheme.typography.bodySmall, color = TextSecondary)
-                    Text(uiState.flow, style = MonoMetricsSmall.copy(fontWeight = FontWeight.Bold), color = PrimaryCobalt)
+                    Text(uiState.flow.ifBlank { "--" }, style = MonoMetricsSmall.copy(fontWeight = FontWeight.Bold), color = PrimaryCobalt)
                 }
 
                 Row(
@@ -921,7 +1020,7 @@ fun TechnicalReadoutCard(uiState: VpnUiState) {
                                     .background(SecondaryEmerald)
                             )
                             Spacer(modifier = Modifier.height(4.dp))
-                            Text("Tehran", style = MonoMetricsSmall.copy(fontSize = 10.sp), color = TextSecondary)
+                            Text("Device", style = MonoMetricsSmall.copy(fontSize = 10.sp), color = TextSecondary)
                         }
 
                         // Stream bar
@@ -946,7 +1045,11 @@ fun TechnicalReadoutCard(uiState: VpnUiState) {
                                     .background(PrimaryCobalt)
                             )
                             Spacer(modifier = Modifier.height(4.dp))
-                            Text("Frankfurt", style = MonoMetricsSmall.copy(fontSize = 10.sp), color = TextSecondary)
+                            Text(
+                                uiState.selectedServer?.countryName?.takeIf { it.isNotBlank() } ?: "No server",
+                                style = MonoMetricsSmall.copy(fontSize = 10.sp),
+                                color = TextSecondary
+                            )
                         }
                     }
                 }

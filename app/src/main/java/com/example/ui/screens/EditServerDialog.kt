@@ -102,6 +102,7 @@ fun EditServerScreen(
     var address by remember { mutableStateOf(serverToEdit?.address.orEmpty()) }
     var port by remember { mutableStateOf(serverToEdit?.port?.toString() ?: "443") }
     var uuid by remember { mutableStateOf(serverToEdit?.uuid.orEmpty()) }
+    var method by remember { mutableStateOf(serverToEdit?.method.orEmpty()) }
     var showPassword by remember { mutableStateOf(false) }
 
     var selectedProtocol by remember { mutableStateOf(serverToEdit?.protocol ?: "VLESS") }
@@ -120,6 +121,7 @@ fun EditServerScreen(
             alias.isBlank() ||
             address.isBlank() ||
             uuid.isBlank() ||
+            (selectedProtocol == "Shadowsocks" && method.isBlank()) ||
             parsedPort == null ||
             parsedPort !in 1..65535
         ) {
@@ -141,6 +143,7 @@ fun EditServerScreen(
             address = address.trim(),
             port = parsedPort,
             uuid = uuid.trim(),
+            method = method.trim(),
             protocol = selectedProtocol,
             security = selectedSecurity,
             publicKey = publicKey,
@@ -352,6 +355,15 @@ fun EditServerScreen(
                                 )
                             }
                         }
+                    }
+
+                    if (selectedProtocol == "Shadowsocks") {
+                        DarkInputField(
+                            label = "Cipher / Method",
+                            value = method,
+                            onValueChange = { method = it },
+                            placeholder = "e.g. chacha20-ietf-poly1305"
+                        )
                     }
 
                     // Protocol Info notice
