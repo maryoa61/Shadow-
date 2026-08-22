@@ -5,7 +5,6 @@ import android.util.Log
 import java.io.File
 import java.net.InetSocketAddress
 import java.net.Socket
-import java.util.concurrent.TimeUnit
 
 internal class SingBoxProcess(private val context: Context) {
     companion object {
@@ -18,7 +17,7 @@ internal class SingBoxProcess(private val context: Context) {
     private var logThread: Thread? = null
 
     val isAlive: Boolean
-        get() = process?.isAlive == true
+        get() = process?.let(::processIsAlive) == true
 
     fun version(): String? {
         val binary = binary() ?: return null
@@ -27,7 +26,7 @@ internal class SingBoxProcess(private val context: Context) {
                 .redirectErrorStream(true)
                 .start()
             val output = process.inputStream.bufferedReader().readText()
-            process.waitFor(3, TimeUnit.SECONDS)
+            process.waitFor()
             Regex("sing-box version\\s+(\\S+)", RegexOption.IGNORE_CASE)
                 .find(output)?.groupValues?.getOrNull(1)
         }.getOrNull()
@@ -67,7 +66,7 @@ internal class SingBoxProcess(private val context: Context) {
         }
 
         if (!waitForProxy()) {
-            val exit = if (started.isAlive) "did not open its local proxy" else "exited with code ${started.exitValue()}"
+            val exit = if (processIsAlive(started)) "did not open its local proxy" else "exited with code ${started.exitValue()}"
             stop()
             error("sing-box $exit.")
         }
@@ -79,9 +78,12 @@ internal class SingBoxProcess(private val context: Context) {
         if (current != null) {
             runCatching {
                 current.destroy()
-                if (!current.waitFor(1200, TimeUnit.MILLISECONDS)) {
-                    current.destroyForcibly()
-                    current.waitFor(800, TimeUnit.MILLISECONDS)
+                if (!waitForExit(current, 1500)) {
+                    // Process.destroy() is available on every supported API.
+                    // A second signal is preferable to calling destroyForcibly(),
+                    // which does not exist on Android 7 (API 24/25).
+                    current.destroy()
+                    waitForExit(current, 500)
                 }
             }.onFailure { Log.w(TAG, "Failed to stop sing-box", it) }
         }
@@ -102,10 +104,7 @@ internal class SingBoxProcess(private val context: Context) {
             .redirectErrorStream(true)
             .start()
         val output = check.inputStream.bufferedReader().readText().trim()
-        if (!check.waitFor(8, TimeUnit.SECONDS)) {
-            check.destroyForcibly()
-            error("sing-box config validation timed out.")
-        }
+        check.waitFor()
         if (check.exitValue() != 0) {
             error(output.ifBlank { "sing-box rejected the server configuration." })
         }
@@ -125,6 +124,21 @@ internal class SingBoxProcess(private val context: Context) {
             }
         }
         return false
+    }
+
+    private fun processIsAlive(target: Process): Boolean = try {
+        target.exitValue()
+        false
+    } catch (_: IllegalThreadStateException) {
+        true
+    }
+
+    private fun waitForExit(target: Process, timeoutMs: Long): Boolean {
+        val deadline = System.currentTimeMillis() + timeoutMs
+        while (processIsAlive(target) && System.currentTimeMillis() < deadline) {
+            Thread.sleep(25)
+        }
+        return !processIsAlive(target)
     }
 
     private fun binary(): File? {
