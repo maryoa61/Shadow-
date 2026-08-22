@@ -22,24 +22,85 @@ jobs:
       - name: Check out repository
         uses: actions/checkout@v4
 
-      - name: Set up JDK 17
-        uses: actions/setup-java@v4
+      # JDK 21 برای Gradle و Android Gradle Plugin
+      - name: Set up JDK 21
+        uses: actions/setup-java@v5
         with:
           distribution: temurin
-          java-version: "17"
+          java-version: "21"
+          cache: gradle
 
-      # The repository contains the wrapper configuration, but the wrapper
-      # script and JAR are missing. Install the configured Gradle version.
-      - name: Set up Gradle
+      - name: Verify JDK 21 runtime
+        shell: bash
+        run: |
+          java -version
+
+          JAVA_SPEC_VERSION="$(
+            java -XshowSettings:properties -version 2>&1 |
+            awk '/java.specification.version/ { print $3 }'
+          )"
+
+          if [[ "$JAVA_SPEC_VERSION" != "21" ]]; then
+            echo "Expected JDK 21, but found Java $JAVA_SPEC_VERSION" >&2
+            exit 1
+          fi
+
+      # چون gradlew و gradle-wrapper.jar داخل مخزن نیستند،
+      # نسخه موردنیاز Gradle مستقیماً نصب می‌شود.
+      - name: Set up Gradle 9.3.1
         uses: gradle/actions/setup-gradle@v4
         with:
           gradle-version: "9.3.1"
 
-      - name: Install Android SDK platform
+      # نصب Android Command-line Tools، پلتفرم و Build Tools
+      - name: Set up Android SDK and command-line tools
+        uses: android-actions/setup-android@v4
+        with:
+          cmdline-tools-version: "14742923"
+          packages: "platform-tools platforms;android-36.1 build-tools;36.0.0"
+
+      # بررسی می‌کند sdkmanager و پکیج‌های لازم واقعاً نصب شده باشند.
+      - name: Verify Android SDK installation
         shell: bash
         run: |
-          yes | sdkmanager --licenses >/dev/null || true
-          sdkmanager "platforms;android-36.1"
+          SDK_ROOT="${ANDROID_SDK_ROOT:-${ANDROID_HOME:-}}"
+
+          if [[ -z "$SDK_ROOT" ]]; then
+            echo "ANDROID_SDK_ROOT and ANDROID_HOME are not set." >&2
+            exit 1
+          fi
+
+          SDKMANAGER="$SDK_ROOT/cmdline-tools/latest/bin/sdkmanager"
+
+          if [[ ! -x "$SDKMANAGER" ]]; then
+            echo "sdkmanager was not found at: $SDKMANAGER" >&2
+
+            echo "Available sdkmanager files:"
+            find "$SDK_ROOT/cmdline-tools" \
+              -maxdepth 4 \
+              -type f \
+              -name sdkmanager \
+              -print 2>/dev/null || true
+
+            exit 1
+          fi
+
+          echo "$SDK_ROOT/cmdline-tools/latest/bin" >> "$GITHUB_PATH"
+
+          echo "Android SDK root: $SDK_ROOT"
+          echo "sdkmanager path: $SDKMANAGER"
+
+          "$SDKMANAGER" --version
+
+          if [[ ! -d "$SDK_ROOT/platforms/android-36.1" ]]; then
+            echo "Android SDK platform android-36.1 is missing." >&2
+            exit 1
+          fi
+
+          if [[ ! -d "$SDK_ROOT/build-tools/36.0.0" ]]; then
+            echo "Android Build Tools 36.0.0 are missing." >&2
+            exit 1
+          fi
 
       - name: Create debug signing key
         shell: bash
@@ -57,7 +118,14 @@ jobs:
           fi
 
       - name: Lint, test, and build debug APK
-        run: gradle --no-daemon --stacktrace lintDebug testDebugUnitTest assembleDebug
+        shell: bash
+        run: |
+          gradle \
+            --no-daemon \
+            --stacktrace \
+            lintDebug \
+            testDebugUnitTest \
+            assembleDebug
 
       - name: Upload debug APK
         uses: actions/upload-artifact@v4
@@ -71,10 +139,9 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: android-ci-reports
+          name: shadow-net-build-reports
           path: |
-            app/build/reports/tests/
-            app/build/reports/lint-results-debug.html
-            app/build/reports/lint-results-debug.xml
+            app/build/reports/**
+            app/build/test-results/**
           if-no-files-found: warn
-          retention-days: 14
+          retention-days: 7
