@@ -15,7 +15,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -52,9 +52,9 @@ class MainActivity : ComponentActivity() {
 @Composable
 fun ShadowNetApp(vpnViewModel: VpnViewModel = viewModel()) {
     val context = LocalContext.current
-    val uiState by vpnViewModel.uiState.collectAsState()
-    val serverList by vpnViewModel.servers.collectAsState()
-    val logList by vpnViewModel.logs.collectAsState()
+    val uiState by vpnViewModel.uiState.collectAsStateWithLifecycle()
+    val serverList by vpnViewModel.servers.collectAsStateWithLifecycle()
+    val logList by vpnViewModel.logs.collectAsStateWithLifecycle()
 
     var currentTab by remember { mutableStateOf(NavigationTab.HOME) }
     var editingServer by remember { mutableStateOf<ServerEntity?>(null) }

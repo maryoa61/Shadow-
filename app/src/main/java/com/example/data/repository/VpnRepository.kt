@@ -55,7 +55,7 @@ class VpnRepository(
                     address = "ist-02.shadownet.core",
                     port = 443,
                     uuid = "e7f8a9b0-1234-5678-90ab-cdef12345678",
-                    protocol = "Reality",
+                    protocol = "VLESS",
                     security = "Reality",
                     publicKey = "tr9876543210zyxwvutsrqponmlkj",
                     shortId = "24",
@@ -144,14 +144,37 @@ class VpnRepository(
                 LogEntryEntity(timeFormatted = "14:02:17", level = "DBG", message = "Tearing down local listeners...")
             )
             logDao.insertLogs(initialLogs)
+        }
 
+        // Settings and servers have independent lifecycles. A restored database can
+        // contain servers without the singleton settings row, so seed it separately.
+        if (appSettingsDao.getSettings().firstOrNull() == null) {
             appSettingsDao.saveSettings(AppSettingsEntity())
         }
     }
 
-    suspend fun insertServer(server: ServerEntity): Long = serverDao.insertServer(server)
+    suspend fun insertServer(server: ServerEntity): Long {
+        val shouldSelect = server.isSelected || serverDao.getServerCount() == 0
+        val insertedId = serverDao.insertServer(server.copy(isSelected = false))
+        if (shouldSelect) {
+            serverDao.setSelectedServer(insertedId)
+        }
+        return insertedId
+    }
+
     suspend fun updateServer(server: ServerEntity) = serverDao.updateServer(server)
-    suspend fun deleteServer(server: ServerEntity) = serverDao.deleteServer(server)
+
+    suspend fun deleteServer(server: ServerEntity) {
+        val wasSelected = serverDao.getSelectedServerNow()?.id == server.id
+        serverDao.deleteServer(server)
+
+        // Keep the invariant that a non-empty server list always has one active node.
+        if (wasSelected) {
+            serverDao.getFirstServer()?.let { fallback ->
+                serverDao.setSelectedServer(fallback.id)
+            }
+        }
+    }
     suspend fun selectServer(serverId: Long) = serverDao.setSelectedServer(serverId)
     suspend fun getServerById(id: Long) = serverDao.getServerById(id)
 

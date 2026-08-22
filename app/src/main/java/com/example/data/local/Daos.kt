@@ -19,6 +19,12 @@ interface ServerDao {
     @Query("SELECT * FROM servers WHERE id = :id")
     suspend fun getServerById(id: Long): ServerEntity?
 
+    @Query("SELECT * FROM servers WHERE isSelected = 1 LIMIT 1")
+    suspend fun getSelectedServerNow(): ServerEntity?
+
+    @Query("SELECT * FROM servers ORDER BY id ASC LIMIT 1")
+    suspend fun getFirstServer(): ServerEntity?
+
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertServer(server: ServerEntity): Long
 
