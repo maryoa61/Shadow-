@@ -2,10 +2,11 @@ plugins {
   alias(libs.plugins.android.application)
   // AGP 9.x provides built-in Kotlin support; do NOT apply
   // org.jetbrains.kotlin.android here (it conflicts with built-in Kotlin).
-  // The Compose compiler is likewise supplied automatically by AGP's
-  // built-in Kotlin when buildFeatures.compose is enabled — the standalone
-  // org.jetbrains.kotlin.plugin.compose plugin is intentionally NOT applied
-  // because it breaks lintDebug/assembleDebug with AGP 9.1 built-in Kotlin.
+  // The Compose compiler plugin IS still required with buildFeatures.compose
+  // enabled ("Starting in Kotlin 2.0, the Compose Compiler Gradle plugin is
+  // required when compose is enabled"); version must match AGP's embedded
+  // Kotlin 2.2.10.
+  alias(libs.plugins.kotlin.compose)
   alias(libs.plugins.google.devtools.ksp)
   // Roborazzi 1.59 is incompatible with AGP 9.x; re-enable after it ships
   // an AGP 9 compatible release. The screenshot test is also disabled below.

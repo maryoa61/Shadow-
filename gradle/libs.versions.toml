@@ -9,8 +9,9 @@ lifecycleViewmodelCompose = "2.8.7"
 lifecycleRuntimeCompose = "2.8.7"
 activityCompose = "1.10.1"
 composeBom = "2024.09.00"
-# AGP 9.1's built-in Kotlin embeds KGP 2.2.10; no standalone Kotlin plugin
-# (or Compose compiler plugin) version is declared in this catalog anymore.
+# AGP 9.1's built-in Kotlin embeds KGP 2.2.10; the Compose compiler plugin
+# version must match that embedded Kotlin version.
+kotlin = "2.2.10"
 # KSP 2.3.1+ supports AGP 9's built-in Kotlin (older KSP versions add their
 # generated sources via the kotlin.sourceSets DSL, which AGP 9 forbids), and
 # since KSP 2.3.0 the version is no longer tied to the Kotlin compiler.
@@ -104,7 +105,8 @@ googleid = { group = "com.google.android.libraries.identity.googleid", name = "g
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
-# No kotlin-compose plugin: AGP 9's built-in Kotlin supplies the Compose
-# compiler automatically when buildFeatures.compose is enabled.
+# AGP 9 requires the Compose compiler Gradle plugin when buildFeatures.compose
+# is enabled; its version must match AGP's built-in Kotlin (2.2.10).
+kotlin-compose = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
 google-devtools-ksp = { id = "com.google.devtools.ksp", version.ref = "googleDevtoolsKsp" }
 roborazzi = { id = "io.github.takahirom.roborazzi", version.ref = "roborazzi" }
