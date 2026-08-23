@@ -32,7 +32,11 @@ android {
 
     testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
-    ndk { abiFilters.addAll(shadowNetAbis) }
+    // NOTE: ABI filtering is done exclusively via `splits.abi` below. AGP
+    // rejects a configuration where ndk.abiFilters and splits abi filters
+    // both contain the same ABI ("Conflicting configuration ... in ndk
+    // abiFilters cannot be present when splits abi filters are set"), and
+    // each split APK already packages only the native libs of its own ABI.
   }
 
   signingConfigs {
