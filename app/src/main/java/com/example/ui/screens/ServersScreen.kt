@@ -27,9 +27,9 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Bolt
 import androidx.compose.material.icons.filled.ContentPaste
-import androidx.compose.material.icons.filled.Link
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.QrCodeScanner
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.ThumbUp
 import androidx.compose.material.icons.filled.Verified
@@ -89,8 +89,7 @@ fun ServersScreen(
     viewModel: VpnViewModel,
     uiState: VpnUiState,
     serverList: List<ServerEntity>,
-    onOpenEditServer: (ServerEntity?) -> Unit,
-    onOpenImportConfig: () -> Unit
+    onOpenEditServer: (ServerEntity?) -> Unit
 ) {
     var expandedServerId by remember { mutableStateOf<Long?>(null) }
 
@@ -215,23 +214,6 @@ fun ServersScreen(
             verticalArrangement = Arrangement.spacedBy(12.dp),
             horizontalAlignment = Alignment.End
         ) {
-            FloatingActionButton(
-                onClick = onOpenImportConfig,
-                containerColor = PrimaryCobalt,
-                contentColor = Color.White,
-                shape = RoundedCornerShape(16.dp),
-                modifier = Modifier
-                    .size(52.dp)
-                    .border(1.dp, PrimaryCobalt, RoundedCornerShape(16.dp))
-                    .testTag("import_config_fab")
-            ) {
-                Icon(
-                    imageVector = Icons.Default.Link,
-                    contentDescription = "Import config link",
-                    modifier = Modifier.size(22.dp)
-                )
-            }
-
             FloatingActionButton(
                 onClick = { onOpenEditServer(null) },
                 containerColor = SurfaceBright,
