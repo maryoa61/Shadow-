@@ -1,17 +1,23 @@
-import com.google.gms.googleservices.GoogleServicesPlugin.MissingGoogleServicesStrategy
-
 plugins {
   alias(libs.plugins.android.application)
+  // AGP 9.x provides built-in Kotlin support; do NOT apply
+  // org.jetbrains.kotlin.android here (it conflicts with built-in Kotlin).
   alias(libs.plugins.kotlin.compose)
   alias(libs.plugins.google.devtools.ksp)
   alias(libs.plugins.roborazzi)
-  alias(libs.plugins.secrets)
-  alias(libs.plugins.google.services)
 }
 
 android {
   namespace = "com.example"
   compileSdk { version = release(36) { minorApiLevel = 1 } }
+
+  // SHADOW_NET_ABIS lets CI (and local developers) target a single ABI.
+  // When unset we fall back to the full device matrix used during development.
+  val shadowNetAbis: List<String> = (System.getenv("SHADOW_NET_ABIS") ?: "")
+    .split(',', ' ')
+    .map { it.trim() }
+    .filter { it.isNotEmpty() }
+    .ifEmpty { listOf("arm64-v8a", "armeabi-v7a", "x86", "x86_64") }
 
   defaultConfig {
     applicationId = "com.aistudio.shadownet.qzkvtr"
@@ -21,6 +27,8 @@ android {
     versionName = "1.0"
 
     testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+
+    ndk { abiFilters.addAll(shadowNetAbis) }
   }
 
   signingConfigs {
@@ -49,8 +57,8 @@ android {
     debug { signingConfig = signingConfigs.getByName("debugConfig") }
   }
   compileOptions {
-    sourceCompatibility = JavaVersion.VERSION_11
-    targetCompatibility = JavaVersion.VERSION_11
+    sourceCompatibility = JavaVersion.VERSION_21
+    targetCompatibility = JavaVersion.VERSION_21
   }
   buildFeatures {
     compose = true
@@ -60,11 +68,12 @@ android {
   packaging {
     jniLibs.useLegacyPackaging = true
   }
+
   splits {
     abi {
       isEnable = true
       reset()
-      include("arm64-v8a", "armeabi-v7a", "x86", "x86_64")
+      include(*shadowNetAbis.toTypedArray())
       isUniversalApk = false
     }
   }
@@ -75,15 +84,18 @@ android {
   }
 }
 
-// Configure the Secrets Gradle Plugin to use .env and .env.example files
-// to match the convention used in Web projects.
-secrets {
-  propertiesFileName = ".env"
-  defaultPropertiesFileName = ".env.example"
-  ignoreList.add("FIREBASE_APPCHECK_DEBUG_TOKEN")
-}
+// google-services.json is intentionally absent in this repository; the
+// plugin is configured in passthrough mode via gradle.properties so builds
+// do not require a Firebase configuration file.
 
-googleServices { missingGoogleServicesStrategy = MissingGoogleServicesStrategy.WARN }
+// AGP 9.x ships built-in Kotlin support. The `kotlin` extension is provided
+// by that built-in plugin and lets us align the Kotlin JVM target with the
+// Java source/target compatibility above.
+kotlin {
+  compilerOptions {
+    jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_21)
+  }
+}
 
 val fetchSingBoxCore by tasks.registering(Exec::class) {
   group = "build setup"

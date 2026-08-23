@@ -33,6 +33,7 @@ import com.example.ui.components.TacticalBottomNavBar
 import com.example.ui.components.TacticalTopAppBar
 import com.example.ui.screens.EditServerScreen
 import com.example.ui.screens.HomeScreen
+import com.example.ui.screens.ImportConfigScreen
 import com.example.ui.screens.ProfileScreen
 import com.example.ui.screens.ServersScreen
 import com.example.ui.screens.ToolkitScreen
@@ -62,6 +63,7 @@ fun ShadowNetApp(vpnViewModel: VpnViewModel = viewModel()) {
     var currentTab by remember { mutableStateOf(NavigationTab.HOME) }
     var editingServer by remember { mutableStateOf<ServerEntity?>(null) }
     var isEditingServerOpen by remember { mutableStateOf(false) }
+    var isImportConfigOpen by remember { mutableStateOf(false) }
 
     val vpnPermissionLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.StartActivityForResult()
@@ -161,7 +163,8 @@ fun ShadowNetApp(vpnViewModel: VpnViewModel = viewModel()) {
                             onOpenEditServer = { server ->
                                 editingServer = server
                                 isEditingServerOpen = true
-                            }
+                            },
+                            onOpenImportConfig = { isImportConfigOpen = true }
                         )
 
                         NavigationTab.TOOLKIT -> ToolkitScreen(
@@ -189,6 +192,16 @@ fun ShadowNetApp(vpnViewModel: VpnViewModel = viewModel()) {
                     isEditingServerOpen = false
                     editingServer = null
                 }
+            )
+        }
+
+        // Full Screen Import Configuration Overlay
+        if (isImportConfigOpen) {
+            ImportConfigScreen(
+                onImportServer = { rawLink, onResult ->
+                    vpnViewModel.importConfigFromLink(rawLink, onResult)
+                },
+                onDismiss = { isImportConfigOpen = false }
             )
         }
 
