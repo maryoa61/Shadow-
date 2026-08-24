@@ -7,6 +7,8 @@ import androidx.lifecycle.viewModelScope
 import com.example.data.local.AppDatabase
 import com.example.data.local.AppSettingsEntity
 import com.example.data.local.LogEntryEntity
+import com.example.data.importer.ConfigLinkParser
+import com.example.data.importer.ConfigParseResult
 import com.example.data.local.ServerEntity
 import com.example.data.repository.VpnRepository
 import com.example.vpn.ConnectionPhase
@@ -369,6 +371,44 @@ class VpnViewModel(application: Application) : AndroidViewModel(application) {
                 repository.addLog("OK", "Updated configuration: ${server.alias}")
             }
             onDone()
+        }
+    }
+
+    /**
+     * Parse a pasted/share configuration link and persist the resulting server
+     * when parsing succeeds. The [onResult] callback always runs on the main
+     * thread so callers can drive UI state (toasts, dialogs) directly.
+     */
+    fun importConfigFromLink(rawLink: String, onResult: (ConfigParseResult) -> Unit) {
+        when (val parsed = ConfigLinkParser.parse(rawLink)) {
+            is ConfigParseResult.Failure -> {
+                viewModelScope.launch {
+                    repository.addLog("ERR", "Config import failed: ${parsed.reason}")
+                    onResult(parsed)
+                }
+            }
+            is ConfigParseResult.Success -> {
+                viewModelScope.launch {
+                    val server = parsed.server
+                    runCatching { repository.insertServer(server) }
+                        .onSuccess { id ->
+                            repository.addLog(
+                                "OK",
+                                "Imported ${server.protocol} node '${server.alias}' ($id)"
+                            )
+                            onResult(
+                                ConfigParseResult.Success(
+                                    server.copy(id = id)
+                                )
+                            )
+                        }
+                        .onFailure { error ->
+                            val reason = "Could not save imported node: ${error.message ?: "unknown error"}"
+                            repository.addLog("ERR", reason)
+                            onResult(ConfigParseResult.Failure(reason))
+                        }
+                }
+            }
         }
     }
 
