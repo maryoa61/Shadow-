@@ -248,7 +248,7 @@ class ShadowVpnService : VpnService(), CoreCallbackHandler {
     private fun xudpBaseKey(): String {
         val prefs = getSharedPreferences(CORE_PREFS, Context.MODE_PRIVATE)
         val existing = prefs.getString(XUDP_BASE_KEY_PREF, null)
-        if (XudpBaseKey.isValid(existing)) return existing
+        if (existing != null && XudpBaseKey.isValid(existing)) return existing
         val fresh = XudpBaseKey.generate()
         prefs.edit().putString(XUDP_BASE_KEY_PREF, fresh).apply()
         return fresh

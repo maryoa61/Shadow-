@@ -15,10 +15,14 @@ import org.robolectric.annotation.Config
 @Config(sdk = [36])
 class XudpBaseKeyTest {
     @Test
-    fun `generated key is base64 that decodes to exactly 32 bytes`() {
+    fun `generated key is raw url-safe base64 that decodes to exactly 32 bytes`() {
         val key = XudpBaseKey.generate()
 
-        assertEquals(XudpBaseKey.KEY_BYTES, Base64.decode(key, Base64.NO_WRAP).size)
+        assertEquals(XudpBaseKey.RAW_URL_LENGTH, key.length)
+        assertEquals(
+            XudpBaseKey.KEY_BYTES,
+            Base64.decode(key, Base64.URL_SAFE or Base64.NO_PADDING).size
+        )
         assertTrue(XudpBaseKey.isValid(key))
     }
 
@@ -28,14 +32,30 @@ class XudpBaseKeyTest {
     }
 
     @Test
-    fun `isValid rejects blank and wrong length keys`() {
+    fun `isValid rejects blank wrong length and non url-safe keys`() {
         assertFalse(XudpBaseKey.isValid(null))
         assertFalse(XudpBaseKey.isValid(""))
         assertFalse(XudpBaseKey.isValid("   "))
-        // Base64 of 16 bytes: valid Base64, but not the required 32.
+
+        // Wrong decoded length (16 or 64 bytes instead of 32).
         assertFalse(XudpBaseKey.isValid(Base64.encodeToString(ByteArray(16), Base64.NO_WRAP)))
-        // Base64 of 64 bytes: valid Base64, but again not 32.
         assertFalse(XudpBaseKey.isValid(Base64.encodeToString(ByteArray(64), Base64.NO_WRAP)))
+
+        // Standard Base64 of 32 bytes: Xray's RawURLEncoding rejects both its
+        // '+'/'/' alphabet and its '=' padding.
+        assertFalse(XudpBaseKey.isValid(Base64.encodeToString(ByteArray(32), Base64.NO_WRAP)))
+
+        // URL-safe but padded: RawURLEncoding rejects padding too.
+        assertFalse(
+            XudpBaseKey.isValid(
+                Base64.encodeToString(ByteArray(32), Base64.NO_WRAP or Base64.URL_SAFE)
+            )
+        )
+
+        // Injecting a '+' into an otherwise well-formed key must fail.
+        val wellFormed = XudpBaseKey.generate()
+        val injected = wellFormed.replaceFirst(Regex("[A-Za-z0-9_-]"), "+")
+        assertFalse(XudpBaseKey.isValid(injected))
     }
 
     @Test
