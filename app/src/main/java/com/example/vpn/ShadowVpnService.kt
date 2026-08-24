@@ -40,7 +40,6 @@ import kotlinx.coroutines.sync.withLock
 import libv2ray.CoreCallbackHandler
 import libv2ray.CoreController
 import libv2ray.Libv2ray
-import java.util.UUID
 
 class ShadowVpnService : VpnService(), CoreCallbackHandler {
     companion object {
@@ -51,6 +50,8 @@ class ShadowVpnService : VpnService(), CoreCallbackHandler {
         private const val CHANNEL_ID = "shadow_net_vpn"
         private const val NOTIFICATION_ID = 4101
         private const val MTU = 1500
+        private const val CORE_PREFS = "shadownet.core"
+        private const val XUDP_BASE_KEY_PREF = "xudp_base_key"
 
         fun start(context: Context, preferredCore: CoreEngine) {
             val intent = Intent(context, ShadowVpnService::class.java)
@@ -236,7 +237,21 @@ class ShadowVpnService : VpnService(), CoreCallbackHandler {
 
     private fun initializeXray() {
         Seq.setContext(applicationContext)
-        Libv2ray.initCoreEnv(filesDir.absolutePath, UUID.nameUUIDFromBytes(packageName.toByteArray()).toString())
+        Libv2ray.initCoreEnv(filesDir.absolutePath, xudpBaseKey())
+    }
+
+    /**
+     * Returns a persistent XUDP base key, generating and storing one on first
+     * use. The key must survive restarts so already-open connections on the
+     * server side keep decrypting correctly.
+     */
+    private fun xudpBaseKey(): String {
+        val prefs = getSharedPreferences(CORE_PREFS, Context.MODE_PRIVATE)
+        val existing = prefs.getString(XUDP_BASE_KEY_PREF, null)
+        if (XudpBaseKey.isValid(existing)) return existing
+        val fresh = XudpBaseKey.generate()
+        prefs.edit().putString(XUDP_BASE_KEY_PREF, fresh).apply()
+        return fresh
     }
 
     private fun startCandidate(
