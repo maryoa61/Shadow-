@@ -1,0 +1,23 @@
+name = "shadow-store-worker"
+main = "worker.js"
+compatibility_date = "2026-08-01"
+
+# ---- متغیرهای عمومی ----
+[vars]
+STORE_URL = "https://maryoa61.github.io/Shadow-/store/"
+SUPPORT_USER = "shadow_support"
+GH_REPO = "maryoa61/Shadow-"
+GH_BRANCH = "main"
+GH_PATH = "store/products.json"
+
+# ---- سکرت‌ها (با این دستورها تنظیم کن) ----
+# npx wrangler secret put BOT_TOKEN
+# npx wrangler secret put ADMIN_CHAT_ID
+# npx wrangler secret put ADMIN_KEY
+
+# ---- ذخیره‌سازی سفارش‌ها (اختیاری اما توصیه‌شده) ----
+# ابتدا: npx wrangler kv namespace create ORDERS
+# سپس آیدی برگشتی را این‌جا بگذار و کامنت‌ها را بردار:
+# [[kv_namespaces]]
+# binding = "ORDERS"
+# id = "KV_NAMESPACE_ID"

@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>شادو‌استور | فروشگاه اشتراک SHADOW_NET</title>
+  <meta name="description" content="فروشگاه رسمی اشتراک‌های SHADOW_NET — پرداخت با استارز تلگرام، کریپتو و کارت به کارت. تحویل آنی." />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/rastikerdar/vazirmatn@v33.003/Vazirmatn-font-face.css" />
+  <link rel="stylesheet" href="assets/css/styles.css" />
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🛡️</text></svg>" />
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+        "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+      }
+    }
+  </script>
+</head>
+<body>
+  <!-- بوم سه‌بعدی پس‌زمینه -->
+  <canvas id="bg3d" aria-hidden="true"></canvas>
+  <div class="noise" aria-hidden="true"></div>
+
+  <!-- نوبار -->
+  <header class="nav glass">
+    <a class="brand" href="#top">
+      <span class="brand-mark"></span>
+      <span class="brand-name">SHADOW<em>STORE</em></span>
+    </a>
+    <nav class="nav-links">
+      <a href="#products">محصولات</a>
+      <a href="#payments">روش‌های پرداخت</a>
+      <a href="#guide">راهنما</a>
+      <a href="#faq">سؤالات</a>
+    </nav>
+    <div class="nav-actions">
+      <button id="btn-settings" class="btn btn-ghost" title="تنظیمات اتصال">
+        <svg viewBox="0 0 24 24" class="ic"><path d="M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6Z"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1Z"/></svg>
+        اتصال‌ها
+      </button>
+      <button id="btn-cart" class="btn btn-primary">
+        <svg viewBox="0 0 24 24" class="ic"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>
+        سبد خرید
+        <span id="cart-count" class="cart-count hidden">0</span>
+      </button>
+    </div>
+  </header>
+
+  <main id="top">
+    <!-- هیرو -->
+    <section class="hero">
+      <div class="hero-badge"><span class="pulse"></span> سرورهای فعال + تحویل آنی</div>
+      <h1 class="hero-title">
+        اینترنتِ آزاد،
+        <span class="grad-text">سه‌بعدی و بی‌مرز</span>
+      </h1>
+      <p class="hero-sub">
+        اشتراک رسمی SHADOW_NET با هسته‌های Xray و sing-box، ضدفیلتر DPI و مسیریابی چندمرحله‌ای.
+        پرداخت با <b>استارز تلگرام</b>، <b>کریپتو</b> و <b>کارت به کارت</b> — کانفیگ در چند ثانیه تحویل بگیر.
+      </p>
+      <div class="hero-cta">
+        <a href="#products" class="btn btn-primary btn-lg">مشاهده پلن‌ها</a>
+        <a href="#guide" class="btn btn-glass btn-lg">راهنمای اتصال</a>
+      </div>
+      <div class="hero-stats glass">
+        <div><b id="stat-users">+۱۲٬۴۰۰</b><span>کاربر فعال</span></div>
+        <div><b>۹۹٫۹٪</b><span>آپ‌تایم</span></div>
+        <div><b id="stat-servers">۳۸</b><span>لوکیشن سرور</span></div>
+        <div><b>۲۴/۷</b><span>پشتیبانی</span></div>
+      </div>
+      <div class="scroll-hint" aria-hidden="true"></div>
+    </section>
+
+    <!-- نوار ویژگی‌ها -->
+    <div class="marquee" dir="ltr">
+      <div class="marquee-track" id="marquee-track"></div>
+    </div>
+
+    <!-- محصولات -->
+    <section id="products" class="section">
+      <div class="section-head">
+        <div>
+          <h2 class="section-title">پلن‌های <span class="grad-text">اشتراک</span></h2>
+          <p class="section-sub">کاتالوگ از روی مخزن گیت‌هاب قابل به‌روزرسانی است — منبع فعلی: <b id="catalog-source">محلی</b></p>
+        </div>
+        <button id="btn-sync" class="btn btn-ghost">
+          <svg viewBox="0 0 24 24" class="ic"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+          همگام‌سازی
+        </button>
+      </div>
+      <div id="product-grid" class="product-grid"></div>
+    </section>
+
+    <!-- روش‌های پرداخت -->
+    <section id="payments" class="section">
+      <h2 class="section-title center">سه راه برای <span class="grad-text">پرداخت</span></h2>
+      <div class="pay-cards">
+        <article class="pay-card glass tilt">
+          <div class="pay-icon stars">
+            <svg viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+          </div>
+          <h3>استارز تلگرام</h3>
+          <p>پرداخت مستقیم داخل تلگرام با Telegram Stars. سریع‌ترین روش — فاکتور از ربات صادر می‌شود و کانفیگ خودکار ارسال می‌گردد.</p>
+          <span class="pay-tag">خودکار و آنی</span>
+        </article>
+        <article class="pay-card glass tilt">
+          <div class="pay-icon crypto">
+            <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M9.5 8h4.75a2.25 2.25 0 0 1 0 4.5H9.5h5a2.25 2.25 0 0 1 0 4.5H9.5M9.5 8v9M11 6.5V8m0 8.5V18"/></svg>
+          </div>
+          <h3>کریپتو</h3>
+          <p>تتر (USDT-TRC20)، ترون و تون‌کوین. پس از واریز، کافی است هش تراکنش را ثبت کنی تا سفارشت تأیید شود.</p>
+          <span class="pay-tag">ناشناس و امن</span>
+        </article>
+        <article class="pay-card glass tilt">
+          <div class="pay-icon card">
+            <svg viewBox="0 0 24 24"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
+          </div>
+          <h3>کارت به کارت</h3>
+          <p>واریز به شماره کارت فروشگاه و ثبت کد پیگیری. مناسب کاربران داخل ایران بدون نیاز به درگاه.</p>
+          <span class="pay-tag">ریالی و ساده</span>
+        </article>
+      </div>
+    </section>
+
+    <!-- راهنما -->
+    <section id="guide" class="section">
+      <h2 class="section-title center">خرید در <span class="grad-text">۳ گام</span></h2>
+      <div class="steps">
+        <div class="step glass"><b>۱</b><h4>پلن را انتخاب کن</h4><p>از بین ۶ پلن، مناسب‌ترین را به سبد خرید اضافه کن.</p></div>
+        <div class="step glass"><b>۲</b><h4>روش پرداخت</h4><p>استارز تلگرام، کریپتو یا کارت به کارت — هرکدام راحت‌تری.</p></div>
+        <div class="step glass"><b>۳</b><h4>تحویل کانفیگ</h4><p>سفارش برای ادمین در تلگرام ثبت می‌شود و کانفیگت ارسال می‌گردد.</p></div>
+      </div>
+      <div class="guide-app glass">
+        <div>
+          <h4>کلاینت اندروید SHADOW_NET</h4>
+          <p>اپ رسمی ما با هسته Xray و sing-box را نصب کن و اشتراکت را مستقیم وارد کن.</p>
+        </div>
+        <a class="btn btn-primary" id="btn-app" href="https://github.com/maryoa61/Shadow-" target="_blank" rel="noopener">دانلود از گیت‌هاب</a>
+      </div>
+    </section>
+
+    <!-- سؤالات -->
+    <section id="faq" class="section">
+      <h2 class="section-title center">سؤالات <span class="grad-text">پرتکرار</span></h2>
+      <div class="faq" id="faq-box">
+        <details class="glass"><summary>پرداخت با استارز تلگرام امن است؟</summary><p>بله. فاکتور با Bot API رسمی تلگرام (createInvoiceLink با ارز XTR) صادر می‌شود و پرداخت کاملاً داخل خودِ تلگرام انجام می‌گیرد. هیچ اطلاعات بانکی به ما نمی‌رسد.</p></details>
+        <details class="glass"><summary>کانفیگ کی تحویل داده می‌شود؟</summary><p>در پرداخت با استارز، پس از پرداخت موفق، ربات به‌صورت خودکار سفارش را ثبت و اطلاع‌رسانی می‌کند. در کریپتو و کارت‌به‌کارت، پس از ثبت کد پیگیری/هش، ادمین در چند دقیقه سفارش را تأیید و کانفیگ را در تلگرام برایت می‌فرستد.</p></details>
+        <details class="glass"><summary>روی چه دستگاه‌هایی کار می‌کند؟</summary><p>اپ اندرویدی اختصاصی ما + کانفیگ‌های استاندارد سازگار با v2rayNG، Nekoray، Streisand و سایر کلاینت‌های Xray/sing-box روی iOS، ویندوز و مک.</p></details>
+        <details class="glass"><summary>اگر سرویس قطع شود چه؟</summary><p>تعهد جایگزینی سرور در ساعات اختلال داریم؛ از طریق ربات تلگرام با پشتیبانی در تماس باش.</p></details>
+      </div>
+    </section>
+
+    <footer class="footer">
+      <div class="footer-inner glass">
+        <div>
+          <span class="brand-name">SHADOW<em>STORE</em></span>
+          <p>فروشگاه اشتراک SHADOW_NET — اتصال با ربات تلگرام، ورکر کلودفلر و مخزن گیت‌هاب.</p>
+        </div>
+        <div class="footer-links">
+          <a href="#top">بالای صفحه</a>
+          <a href="#" id="link-bot" target="_blank" rel="noopener">ربات تلگرام</a>
+          <a href="https://github.com/maryoa61/Shadow-" target="_blank" rel="noopener">مخزن گیت‌هاب</a>
+        </div>
+      </div>
+    </footer>
+  </main>
+
+  <!-- سبد خرید -->
+  <aside id="cart-drawer" class="drawer glass" aria-label="سبد خرید">
+    <div class="drawer-head">
+      <h3>سبد خرید</h3>
+      <button class="icon-btn" data-close="cart-drawer" aria-label="بستن">✕</button>
+    </div>
+    <div id="cart-items" class="drawer-body"></div>
+    <div class="drawer-foot">
+      <div class="total-row"><span>جمع کل</span><b id="cart-total">۰ تومان</b></div>
+      <button id="btn-checkout" class="btn btn-primary btn-block">ادامه و پرداخت</button>
+    </div>
+  </aside>
+
+  <!-- مودال تسویه -->
+  <div id="checkout-modal" class="modal" role="dialog" aria-modal="true">
+    <div class="modal-box glass checkout-box">
+      <div class="modal-head">
+        <h3>تکمیل سفارش</h3>
+        <button class="icon-btn" data-close="checkout-modal" aria-label="بستن">✕</button>
+      </div>
+
+      <div id="co-step-1" class="co-step">
+        <div class="field">
+          <label for="co-name">نام و نام خانوادگی</label>
+          <input id="co-name" type="text" placeholder="مثلاً: سارا محمدی" autocomplete="name" />
+        </div>
+        <div class="field">
+          <label for="co-tg">آیدی تلگرام (تحویل سفارش)</label>
+          <input id="co-tg" type="text" dir="ltr" placeholder="@username" />
+        </div>
+        <button id="co-next" class="btn btn-primary btn-block">انتخاب روش پرداخت</button>
+      </div>
+
+      <div id="co-step-2" class="co-step hidden">
+        <div class="pay-tabs" role="tablist">
+          <button class="pay-tab active" data-method="stars" role="tab">⭐ استارز</button>
+          <button class="pay-tab" data-method="crypto" role="tab">🪙 کریپتو</button>
+          <button class="pay-tab" data-method="card" role="tab">💳 کارت‌به‌کارت</button>
+        </div>
+
+        <div id="pay-stars" class="pay-pane">
+          <div class="pay-summary">
+            <p>مبلغ قابل پرداخت با استارز:</p>
+            <b id="stars-total" class="pay-amount">۰ ⭐</b>
+          </div>
+          <p class="hint">روی «پرداخت با استارز» بزن تا فاکتور ربات برایت ساخته شود و در تلگرام باز شود.</p>
+          <button id="pay-stars-btn" class="btn btn-primary btn-block">پرداخت با استارز ⭐</button>
+          <p id="stars-warning" class="warn hidden">برای پرداخت با استارز ابتدا در «اتصال‌ها» توکن ربات را وارد کن.</p>
+        </div>
+
+        <div id="pay-crypto" class="pay-pane hidden">
+          <div class="field">
+            <label for="crypto-net">شبکه / ارز</label>
+            <select id="crypto-net">
+              <option value="usdt">تتر — USDT (TRC20)</option>
+              <option value="trx">ترون — TRX</option>
+              <option value="ton">تون‌کوین — TON</option>
+            </select>
+          </div>
+          <div class="crypto-box">
+            <img id="crypto-qr" alt="QR آدرس کیف پول" width="132" height="132" />
+            <div class="crypto-addr">
+              <span id="crypto-addr" dir="ltr">—</span>
+              <button id="copy-crypto" class="btn btn-ghost btn-sm">کپی آدرس</button>
+            </div>
+          </div>
+          <div class="field">
+            <label for="crypto-tx">هش تراکنش (TXID)</label>
+            <input id="crypto-tx" type="text" dir="ltr" placeholder="مثلاً: 4f9a2c…" />
+          </div>
+          <button id="pay-crypto-btn" class="btn btn-primary btn-block">ثبت سفارش کریپتو</button>
+        </div>
+
+        <div id="pay-card" class="pay-pane hidden">
+          <div class="card-box">
+            <span class="card-label">شماره کارت فروشگاه</span>
+            <b id="card-number" dir="ltr">—</b>
+            <span id="card-holder" class="card-holder">—</span>
+            <button id="copy-card" class="btn btn-ghost btn-sm">کپی شماره کارت</button>
+          </div>
+          <div class="pay-summary">
+            <p>مبلغ واریزی:</p>
+            <b id="card-total" class="pay-amount">۰ تومان</b>
+          </div>
+          <div class="field">
+            <label for="card-ref">کد پیگیری واریز</label>
+            <input id="card-ref" type="text" dir="ltr" placeholder="مثلاً: 12345678" />
+          </div>
+          <button id="pay-card-btn" class="btn btn-primary btn-block">ثبت سفارش کارت‌به‌کارت</button>
+        </div>
+
+        <button id="co-back" class="btn btn-ghost btn-block">بازگشت</button>
+      </div>
+
+      <div id="co-step-3" class="co-step hidden success-step">
+        <div class="success-orb"></div>
+        <h4>سفارش ثبت شد!</h4>
+        <p>شماره سفارش: <b id="order-id" dir="ltr">—</b></p>
+        <p class="hint" id="order-note">جزئیات سفارش برای ادمین در تلگرام ارسال شد. کانفیگ به‌زودی برایت ارسال می‌شود.</p>
+        <button class="btn btn-primary btn-block" data-close="checkout-modal">بستن</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- مودال اتصال‌ها -->
+  <div id="settings-modal" class="modal" role="dialog" aria-modal="true">
+    <div class="modal-box glass settings-box">
+      <div class="modal-head">
+        <h3>اتصال‌های فروشگاه</h3>
+        <button class="icon-btn" data-close="settings-modal" aria-label="بستن">✕</button>
+      </div>
+
+      <div class="set-group">
+        <h4><span class="dot tg"></span> ربات تلگرام</h4>
+        <div class="field"><label for="set-token">توکن ربات (Bot Token)</label><input id="set-token" type="password" dir="ltr" placeholder="123456:AAE…" /></div>
+        <div class="field"><label for="set-admin">چت‌آیدی ادمین (دریافت سفارش‌ها)</label><input id="set-admin" type="text" dir="ltr" placeholder="مثلاً: 123456789 یا @admin" /></div>
+        <div class="row">
+          <button id="btn-test-tg" class="btn btn-ghost">تست اتصال</button>
+          <button id="btn-webhook" class="btn btn-ghost">ثبت وبهوک روی ورکر</button>
+        </div>
+        <p id="tg-status" class="status-line"></p>
+      </div>
+
+      <div class="set-group">
+        <h4><span class="dot cf"></span> ورکر کلودفلر</h4>
+        <div class="field"><label for="set-worker">آدرس ورکر</label><input id="set-worker" type="url" dir="ltr" placeholder="https://shadow-store.your-sub.workers.dev" /></div>
+        <button id="btn-test-worker" class="btn btn-ghost">تست سلامت ورکر</button>
+        <p id="worker-status" class="status-line"></p>
+      </div>
+
+      <div class="set-group">
+        <h4><span class="dot gh"></span> مخزن گیت‌هاب (کاتالوگ محصولات)</h4>
+        <div class="grid-2">
+          <div class="field"><label for="set-gh-owner">مالک</label><input id="set-gh-owner" type="text" dir="ltr" placeholder="maryoa61" /></div>
+          <div class="field"><label for="set-gh-repo">مخزن</label><input id="set-gh-repo" type="text" dir="ltr" placeholder="Shadow-" /></div>
+          <div class="field"><label for="set-gh-branch">برنچ</label><input id="set-gh-branch" type="text" dir="ltr" placeholder="main" /></div>
+          <div class="field"><label for="set-gh-path">مسیر فایل</label><input id="set-gh-path" type="text" dir="ltr" placeholder="store/products.json" /></div>
+        </div>
+        <button id="btn-test-gh" class="btn btn-ghost">همگام‌سازی از گیت‌هاب</button>
+        <p id="gh-status" class="status-line"></p>
+      </div>
+
+      <div class="set-group">
+        <h4><span class="dot pay"></span> اطلاعات پرداخت</h4>
+        <div class="field"><label for="set-card">شماره کارت (کارت‌به‌کارت)</label><input id="set-card" type="text" dir="ltr" placeholder="6037-9971-…" /></div>
+        <div class="field"><label for="set-card-holder">نام صاحب کارت</label><input id="set-card-holder" type="text" placeholder="نام صاحب حساب" /></div>
+        <div class="field"><label for="set-usdt">USDT (TRC20)</label><input id="set-usdt" type="text" dir="ltr" placeholder="T…" /></div>
+        <div class="field"><label for="set-trx">TRX</label><input id="set-trx" type="text" dir="ltr" placeholder="T…" /></div>
+        <div class="field"><label for="set-ton">TON</label><input id="set-ton" type="text" dir="ltr" placeholder="UQ…" /></div>
+        <div class="field"><label for="set-rate">نرخ تتر به تومان (برای نمایش مبلغ کریپتو)</label><input id="set-rate" type="number" dir="ltr" placeholder="115000" /></div>
+      </div>
+
+      <div class="row">
+        <button id="btn-save-settings" class="btn btn-primary">ذخیره اتصال‌ها</button>
+        <button id="btn-reset-settings" class="btn btn-ghost">بازنشانی</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="backdrop" class="backdrop hidden"></div>
+  <div id="toasts" class="toasts" aria-live="polite"></div>
+
+  <script type="module" src="assets/js/scene.js"></script>
+  <script src="assets/js/app.js" defer></script>
+</body>
+</html>
