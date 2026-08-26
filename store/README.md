@@ -74,10 +74,11 @@ npx wrangler deploy
 
 ## ۴. دیپلوی صفحه روی GitHub Pages
 
-ورک‌فلوی `.github/workflows/store-pages.yml` آماده است:
+ورک‌فلوی آماده در [`deploy/store-pages.yml.example`](deploy/store-pages.yml.example) قرار دارد:
 
-1. در گیت‌هاب: **Settings → Pages → Source = GitHub Actions**
-2. روی `main` پوش کن — صفحه در آدرس زیر بالا می‌آید:
+1. آن را به مسیر `.github/workflows/store-pages.yml` کپی کن.
+2. در گیت‌هاب: **Settings → Pages → Source = GitHub Actions**
+3. روی `main` پوش کن — صفحه در آدرس زیر بالا می‌آید:
    `https://<user>.github.io/<repo>/store/`
 3. همین آدرس را در `STORE_URL` داخل `wrangler.toml` بگذار تا دکمه‌ی `/start` ربات به فروشگاه وصل شود.
 
